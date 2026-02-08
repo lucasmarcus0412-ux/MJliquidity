@@ -87,9 +87,11 @@ export async function setUserName(name: string): Promise<void> {
   await AsyncStorage.setItem(KEYS.USER_NAME, name);
 }
 
+const DEFAULT_SUBSCRIPTION_URL = 'https://monzo.com/pay/r/mj-liquidity_hrgayGDJaBTL5a';
+
 export async function getSubscriptionUrl(): Promise<string> {
   const url = await AsyncStorage.getItem(KEYS.SUBSCRIPTION_URL);
-  return url || '';
+  return url || DEFAULT_SUBSCRIPTION_URL;
 }
 
 export async function setSubscriptionUrl(url: string): Promise<void> {
