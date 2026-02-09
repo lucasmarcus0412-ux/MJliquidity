@@ -12,8 +12,14 @@ Preferred communication style: Simple, everyday language.
 
 ### Frontend — Expo / React Native
 - **Framework**: Expo SDK 54 with expo-router for file-based routing
-- **Navigation**: Tab-based layout with 4 tabs — Analysis (index), Chat, Subscribe, Settings
-- **Routing**: `app/(tabs)/` directory contains the four main screens; `app/_layout.tsx` is the root layout
+- **Navigation**: 5-tab layout — Home (index), Gold Intraday, Pro Markets, Trading Hub, Profile
+- **Routing**: `app/(tabs)/` directory contains the five main screens plus hidden legacy routes; `app/_layout.tsx` is the root layout
+- **Tab Details**:
+  - **Home** (`index.tsx`): Free daily analysis feed with admin compose functionality
+  - **Gold Intraday** (`gold-intraday.tsx`): XAUUSD VIP analysis feed + members-only chat (toggle between Analysis/Chat)
+  - **Pro Markets** (`pro-markets.tsx`): Multi-asset (NQ/ES/BTC/XAU) analysis feed + members-only chat (toggle)
+  - **Trading Hub** (`trading-hub.tsx`): Brokers, Prop Firms, Copy Trading partner links
+  - **Profile** (`profile.tsx`): Subscriptions (3 tiers), Education (sub-screen), Legal, Settings, Admin login
 - **State Management**: React Context (`lib/AppContext.tsx`) for global app state (admin status, username, subscription URL). TanStack React Query (`@tanstack/react-query`) is set up for server data fetching via `lib/query-client.ts`
 - **Local Storage**: AsyncStorage (`lib/storage.ts`) handles persistence for analysis posts, chat messages, admin login state, and user preferences. This acts as the primary data store currently — the server-side storage is minimal
 - **Styling**: Dark theme enforced (`userInterfaceStyle: "dark"` in app.json). Color constants in `constants/colors.ts` use a gold/black luxury aesthetic. DM Sans font family loaded via `@expo-google-fonts/dm-sans`
