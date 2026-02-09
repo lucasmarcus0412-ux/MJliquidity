@@ -2,7 +2,7 @@
 
 ## Overview
 
-MJ Liquidity is a mobile-first trading community app built with Expo (React Native) and an Express backend. It provides market analysis posts, community chat, and a subscription system for traders. The app features an admin system where authenticated admins can publish analysis, manage chat, and configure subscription URLs. Data is currently stored locally via AsyncStorage on the client side, with a PostgreSQL-backed server available for future expansion.
+MJ Liquidity is a mobile-first trading community app built with Expo (React Native) and an Express backend. It provides market analysis posts, community chat, and a subscription system for traders. The app features an admin system where authenticated admins can publish analysis, manage chat, and configure subscription URLs. All shared content (analysis posts, chat messages, education posts, moderators) is stored server-side in PostgreSQL. Local-only settings (admin login state, username, subscription tier, notification preferences) remain in AsyncStorage.
 
 ## User Preferences
 
@@ -21,22 +21,23 @@ Preferred communication style: Simple, everyday language.
   - **Trading Hub** (`trading-hub.tsx`): Brokers, Prop Firms, Copy Trading partner links
   - **Profile** (`profile.tsx`): Subscriptions (3 tiers), Education (sub-screen), Legal, Settings, Admin login
 - **State Management**: React Context (`lib/AppContext.tsx`) for global app state (admin status, moderator status, username, subscription URL, moderator list). TanStack React Query (`@tanstack/react-query`) is set up for server data fetching via `lib/query-client.ts`
-- **Local Storage**: AsyncStorage (`lib/storage.ts`) handles persistence for analysis posts, chat messages, admin login state, moderator list, and user preferences. This acts as the primary data store currently — the server-side storage is minimal
+- **Local Storage**: AsyncStorage (`lib/storage.ts`) handles local-only persistence (admin login state, username, subscription tier, notification preferences). All shared content uses server API calls to PostgreSQL
 - **Styling**: Dark theme enforced (`userInterfaceStyle: "dark"` in app.json). Color constants in `constants/colors.ts` use a gold/black luxury aesthetic. DM Sans font family loaded via `@expo-google-fonts/dm-sans`
 - **Platform Support**: iOS, Android, and Web. Platform-specific handling exists (e.g., `KeyboardAwareScrollViewCompat` for web vs native, tab bar styling differences)
 
 ### Backend — Express Server
-- **Location**: `server/` directory with `index.ts` (entry point), `routes.ts` (API route registration), and `storage.ts` (in-memory storage)
-- **Current State**: The server is minimal — it has CORS setup, serves static files in production, and has an in-memory user storage implementation. API routes are prefixed with `/api`
-- **Storage Interface**: `IStorage` interface in `server/storage.ts` defines the storage contract. Currently uses `MemStorage` (in-memory Map). This is designed to be swapped for a database-backed implementation
+- **Location**: `server/` directory with `index.ts` (entry point), `routes.ts` (API route registration), and `storage.ts` (database storage)
+- **Current State**: Full REST API with CORS, PostgreSQL-backed storage via Drizzle ORM, serves static files in production. API routes prefixed with `/api`
+- **Storage**: `DatabaseStorage` class in `server/storage.ts` implements `IStorage` interface using Drizzle ORM with Neon serverless driver
+- **API Endpoints**: `/api/posts/:channel` (GET/POST/DELETE), `/api/chat/:channel` (GET/POST/DELETE), `/api/education` (GET/POST/DELETE), `/api/moderators` (GET/POST/DELETE)
 - **Build**: Server is bundled with esbuild for production (`server:build` script)
 
 ### Database — PostgreSQL with Drizzle ORM
-- **Schema**: Defined in `shared/schema.ts` — currently only has a `users` table with id (UUID), username, and password
+- **Schema**: Defined in `shared/schema.ts` — tables: `users`, `analysis_posts`, `chat_messages`, `education_posts`, `moderators`
 - **ORM**: Drizzle ORM with `drizzle-zod` for validation schema generation
 - **Config**: `drizzle.config.ts` points to `DATABASE_URL` env variable, outputs migrations to `./migrations`
 - **Push**: Use `npm run db:push` to sync schema to the database
-- **Note**: The schema is minimal. Most app data (analysis posts, chat messages) is still in client-side AsyncStorage and would need server-side tables added for a production setup
+- **Note**: All shared app data is now stored in PostgreSQL. Local-only data (admin state, user prefs) remains in AsyncStorage
 
 ### Admin System
 - **Authentication**: Simple password-based admin login (hardcoded password `mjliquid2024` in `lib/AppContext.tsx`). This is client-side only — not a secure auth system
