@@ -20,8 +20,8 @@ Preferred communication style: Simple, everyday language.
   - **Pro Markets** (`pro-markets.tsx`): Multi-asset (NQ/ES/BTC/XAU) analysis feed + members-only chat (toggle)
   - **Trading Hub** (`trading-hub.tsx`): Brokers, Prop Firms, Copy Trading partner links
   - **Profile** (`profile.tsx`): Subscriptions (3 tiers), Education (sub-screen), Legal, Settings, Admin login
-- **State Management**: React Context (`lib/AppContext.tsx`) for global app state (admin status, username, subscription URL). TanStack React Query (`@tanstack/react-query`) is set up for server data fetching via `lib/query-client.ts`
-- **Local Storage**: AsyncStorage (`lib/storage.ts`) handles persistence for analysis posts, chat messages, admin login state, and user preferences. This acts as the primary data store currently — the server-side storage is minimal
+- **State Management**: React Context (`lib/AppContext.tsx`) for global app state (admin status, moderator status, username, subscription URL, moderator list). TanStack React Query (`@tanstack/react-query`) is set up for server data fetching via `lib/query-client.ts`
+- **Local Storage**: AsyncStorage (`lib/storage.ts`) handles persistence for analysis posts, chat messages, admin login state, moderator list, and user preferences. This acts as the primary data store currently — the server-side storage is minimal
 - **Styling**: Dark theme enforced (`userInterfaceStyle: "dark"` in app.json). Color constants in `constants/colors.ts` use a gold/black luxury aesthetic. DM Sans font family loaded via `@expo-google-fonts/dm-sans`
 - **Platform Support**: iOS, Android, and Web. Platform-specific handling exists (e.g., `KeyboardAwareScrollViewCompat` for web vs native, tab bar styling differences)
 
@@ -40,7 +40,14 @@ Preferred communication style: Simple, everyday language.
 
 ### Admin System
 - **Authentication**: Simple password-based admin login (hardcoded password `mjliquid2024` in `lib/AppContext.tsx`). This is client-side only — not a secure auth system
-- **Capabilities**: Admins can create/delete analysis posts, send admin-tagged chat messages, and configure the subscription URL
+- **Capabilities**: Admins can create/delete analysis posts, send admin-tagged chat messages, configure the subscription URL, and manage moderators
+
+### Moderator System
+- **Assignment**: Admins assign moderators by display name via Profile > Admin > Manage Moderators modal
+- **Storage**: Moderator list stored in AsyncStorage (`mjl_moderators` key) with id, username, and addedAt timestamp
+- **Permissions**: Moderators can delete chat messages in Gold Intraday and Pro Markets chats. They cannot post analysis
+- **Visual Badges**: Moderator messages show a green shield icon, "MOD" label, and green-tinted message bubble. Profile shows a green "Moderator" badge
+- **Detection**: A user is recognized as a moderator when their display name matches a name in the moderator list (case-insensitive)
 
 ### Key Scripts
 - `npm run expo:dev` — Start Expo dev server (configured for Replit domain proxying)
