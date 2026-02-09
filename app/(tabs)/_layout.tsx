@@ -15,17 +15,25 @@ function NativeTabLayout() {
         <Icon sf={{ default: "house", selected: "house.fill" }} />
         <Label>Home</Label>
       </NativeTabs.Trigger>
-      <NativeTabs.Trigger name="chat">
-        <Icon sf={{ default: "bubble.left.and.bubble.right", selected: "bubble.left.and.bubble.right.fill" }} />
-        <Label>Chat</Label>
+      <NativeTabs.Trigger name="free">
+        <Icon sf={{ default: "chart.line.uptrend.xyaxis", selected: "chart.line.uptrend.xyaxis" }} />
+        <Label>Free</Label>
       </NativeTabs.Trigger>
-      <NativeTabs.Trigger name="subscribe">
-        <Icon sf={{ default: "creditcard", selected: "creditcard.fill" }} />
-        <Label>Subscribe</Label>
+      <NativeTabs.Trigger name="gold-vip">
+        <Icon sf={{ default: "diamond", selected: "diamond.fill" }} />
+        <Label>Gold VIP</Label>
       </NativeTabs.Trigger>
-      <NativeTabs.Trigger name="settings">
-        <Icon sf={{ default: "gearshape", selected: "gearshape.fill" }} />
-        <Label>Settings</Label>
+      <NativeTabs.Trigger name="four-markets">
+        <Icon sf={{ default: "chart.bar", selected: "chart.bar.fill" }} />
+        <Label>4 Markets</Label>
+      </NativeTabs.Trigger>
+      <NativeTabs.Trigger name="education">
+        <Icon sf={{ default: "book", selected: "book.fill" }} />
+        <Label>Education</Label>
+      </NativeTabs.Trigger>
+      <NativeTabs.Trigger name="traders-hub">
+        <Icon sf={{ default: "briefcase", selected: "briefcase.fill" }} />
+        <Label>Hub</Label>
       </NativeTabs.Trigger>
     </NativeTabs>
   );
@@ -64,7 +72,7 @@ function ClassicTabLayout() {
           ) : null,
         tabBarLabelStyle: {
           fontFamily: "DMSans_500Medium",
-          fontSize: 11,
+          fontSize: 10,
         },
       }}
     >
@@ -78,31 +86,61 @@ function ClassicTabLayout() {
         }}
       />
       <Tabs.Screen
-        name="chat"
+        name="free"
         options={{
-          title: "Chat",
+          title: "Free",
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="chatbubbles-outline" size={size} color={color} />
+            <Ionicons name="analytics-outline" size={size} color={color} />
           ),
         }}
+      />
+      <Tabs.Screen
+        name="gold-vip"
+        options={{
+          title: "Gold VIP",
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="diamond-outline" size={size} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="four-markets"
+        options={{
+          title: "4 Markets",
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="bar-chart-outline" size={size} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="education"
+        options={{
+          title: "Education",
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="book-outline" size={size} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="traders-hub"
+        options={{
+          title: "Hub",
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="briefcase-outline" size={size} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="chat"
+        options={{ href: null }}
       />
       <Tabs.Screen
         name="subscribe"
-        options={{
-          title: "Subscribe",
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="card-outline" size={size} color={color} />
-          ),
-        }}
+        options={{ href: null }}
       />
       <Tabs.Screen
         name="settings"
-        options={{
-          title: "Settings",
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="settings-outline" size={size} color={color} />
-          ),
-        }}
+        options={{ href: null }}
       />
     </Tabs>
   );
