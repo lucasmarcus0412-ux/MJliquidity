@@ -1,18 +1,12 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { apiRequest, getApiUrl } from './query-client';
+import { fetch } from 'expo/fetch';
 
 const KEYS = {
   ADMIN_LOGGED_IN: 'mjl_admin_logged_in',
-  ANALYSIS_POSTS: 'mjl_analysis_posts',
-  CHAT_MESSAGES: 'mjl_chat_messages',
   USER_NAME: 'mjl_user_name',
   SUBSCRIPTION_URL: 'mjl_subscription_url',
   HAS_SEEN_WELCOME: 'mjl_has_seen_welcome',
-  GOLD_VIP_POSTS: 'mjl_gold_vip_posts',
-  FOUR_MARKETS_POSTS: 'mjl_four_markets_posts',
-  GOLD_VIP_CHAT: 'mjl_gold_vip_chat',
-  FOUR_MARKETS_CHAT: 'mjl_four_markets_chat',
-  EDUCATION_POSTS: 'mjl_education_posts',
-  MODERATORS: 'mjl_moderators',
   SUBSCRIPTION_TIER: 'mjl_subscription_tier',
   NOTIF_ANALYSIS: 'mjl_notif_analysis',
   NOTIF_CHAT: 'mjl_notif_chat',
@@ -55,25 +49,6 @@ export interface EducationPost {
   timestamp: number;
 }
 
-function generateId(): string {
-  return Date.now().toString() + Math.random().toString(36).substr(2, 9);
-}
-
-function getPostsKey(channel: FeedChannel): string {
-  switch (channel) {
-    case 'free': return KEYS.ANALYSIS_POSTS;
-    case 'gold_vip': return KEYS.GOLD_VIP_POSTS;
-    case 'four_markets': return KEYS.FOUR_MARKETS_POSTS;
-  }
-}
-
-function getChatKey(channel: ChatChannel): string {
-  switch (channel) {
-    case 'gold_vip': return KEYS.GOLD_VIP_CHAT;
-    case 'four_markets': return KEYS.FOUR_MARKETS_CHAT;
-  }
-}
-
 export async function getAdminStatus(): Promise<boolean> {
   const val = await AsyncStorage.getItem(KEYS.ADMIN_LOGGED_IN);
   return val === 'true';
@@ -84,108 +59,111 @@ export async function setAdminStatus(loggedIn: boolean): Promise<void> {
 }
 
 export async function getAnalysisPosts(channel: FeedChannel = 'free'): Promise<AnalysisPost[]> {
-  const key = getPostsKey(channel);
-  const val = await AsyncStorage.getItem(key);
-  if (!val) return [];
-  return JSON.parse(val);
+  try {
+    const baseUrl = getApiUrl();
+    const url = new URL(`/api/posts/${channel}`, baseUrl);
+    const res = await fetch(url.toString());
+    if (!res.ok) return [];
+    const data = await res.json();
+    return data.map((p: any) => ({
+      ...p,
+      imageUri: p.imageUri || p.image_uri || undefined,
+    }));
+  } catch (err) {
+    console.error('Error fetching posts:', err);
+    return [];
+  }
 }
 
 export async function addAnalysisPost(post: Omit<AnalysisPost, 'id' | 'timestamp'>, channel: FeedChannel = 'free'): Promise<AnalysisPost> {
-  const posts = await getAnalysisPosts(channel);
-  const newPost: AnalysisPost = {
-    ...post,
-    id: generateId(),
-    timestamp: Date.now(),
+  const res = await apiRequest('POST', '/api/posts', {
+    title: post.title,
+    content: post.content,
+    category: post.category,
     channel,
-  };
-  posts.unshift(newPost);
-  const key = getPostsKey(channel);
-  await AsyncStorage.setItem(key, JSON.stringify(posts));
-  return newPost;
+    imageUri: post.imageUri || null,
+  });
+  return await res.json();
 }
 
-export async function deleteAnalysisPost(id: string, channel: FeedChannel = 'free'): Promise<void> {
-  const posts = await getAnalysisPosts(channel);
-  const filtered = posts.filter(p => p.id !== id);
-  const key = getPostsKey(channel);
-  await AsyncStorage.setItem(key, JSON.stringify(filtered));
+export async function deleteAnalysisPost(id: string, _channel: FeedChannel = 'free'): Promise<void> {
+  await apiRequest('DELETE', `/api/posts/${id}`);
 }
 
 export async function getChatMessages(channel?: ChatChannel): Promise<ChatMessage[]> {
-  const key = channel ? getChatKey(channel) : KEYS.CHAT_MESSAGES;
-  const val = await AsyncStorage.getItem(key);
-  if (!val) return [];
-  return JSON.parse(val);
+  try {
+    const ch = channel || 'gold_vip';
+    const baseUrl = getApiUrl();
+    const url = new URL(`/api/chat/${ch}`, baseUrl);
+    const res = await fetch(url.toString());
+    if (!res.ok) return [];
+    return await res.json();
+  } catch (err) {
+    console.error('Error fetching chat:', err);
+    return [];
+  }
 }
 
 export async function addChatMessage(msg: Omit<ChatMessage, 'id' | 'timestamp'>, channel?: ChatChannel): Promise<ChatMessage> {
-  const messages = await getChatMessages(channel);
-  const newMsg: ChatMessage = {
-    ...msg,
-    id: generateId(),
-    timestamp: Date.now(),
-  };
-  messages.push(newMsg);
-  const key = channel ? getChatKey(channel) : KEYS.CHAT_MESSAGES;
-  await AsyncStorage.setItem(key, JSON.stringify(messages));
-  return newMsg;
+  const res = await apiRequest('POST', '/api/chat', {
+    username: msg.username,
+    text: msg.text,
+    channel: channel || 'gold_vip',
+    isAdmin: msg.isAdmin,
+    isModerator: msg.isModerator || false,
+  });
+  return await res.json();
+}
+
+export async function deleteChatMessage(id: string, _channel?: ChatChannel): Promise<void> {
+  await apiRequest('DELETE', `/api/chat/${id}`);
 }
 
 export async function getEducationPosts(): Promise<EducationPost[]> {
-  const val = await AsyncStorage.getItem(KEYS.EDUCATION_POSTS);
-  if (!val) return [];
-  return JSON.parse(val);
+  try {
+    const baseUrl = getApiUrl();
+    const url = new URL('/api/education', baseUrl);
+    const res = await fetch(url.toString());
+    if (!res.ok) return [];
+    return await res.json();
+  } catch (err) {
+    console.error('Error fetching education:', err);
+    return [];
+  }
 }
 
 export async function addEducationPost(post: Omit<EducationPost, 'id' | 'timestamp'>): Promise<EducationPost> {
-  const posts = await getEducationPosts();
-  const newPost: EducationPost = {
-    ...post,
-    id: generateId(),
-    timestamp: Date.now(),
-  };
-  posts.unshift(newPost);
-  await AsyncStorage.setItem(KEYS.EDUCATION_POSTS, JSON.stringify(posts));
-  return newPost;
+  const res = await apiRequest('POST', '/api/education', {
+    title: post.title,
+    content: post.content,
+  });
+  return await res.json();
 }
 
 export async function deleteEducationPost(id: string): Promise<void> {
-  const posts = await getEducationPosts();
-  const filtered = posts.filter(p => p.id !== id);
-  await AsyncStorage.setItem(KEYS.EDUCATION_POSTS, JSON.stringify(filtered));
-}
-
-export async function deleteChatMessage(id: string, channel?: ChatChannel): Promise<void> {
-  const messages = await getChatMessages(channel);
-  const filtered = messages.filter(m => m.id !== id);
-  const key = channel ? getChatKey(channel) : KEYS.CHAT_MESSAGES;
-  await AsyncStorage.setItem(key, JSON.stringify(filtered));
+  await apiRequest('DELETE', `/api/education/${id}`);
 }
 
 export async function getModerators(): Promise<Moderator[]> {
-  const val = await AsyncStorage.getItem(KEYS.MODERATORS);
-  if (!val) return [];
-  return JSON.parse(val);
+  try {
+    const baseUrl = getApiUrl();
+    const url = new URL('/api/moderators', baseUrl);
+    const res = await fetch(url.toString());
+    if (!res.ok) return [];
+    return await res.json();
+  } catch (err) {
+    console.error('Error fetching moderators:', err);
+    return [];
+  }
 }
 
 export async function addModerator(username: string): Promise<Moderator> {
-  const mods = await getModerators();
-  const existing = mods.find(m => m.username.toLowerCase() === username.toLowerCase());
-  if (existing) return existing;
-  const newMod: Moderator = {
-    id: generateId(),
-    username: username.trim(),
-    addedAt: Date.now(),
-  };
-  mods.push(newMod);
-  await AsyncStorage.setItem(KEYS.MODERATORS, JSON.stringify(mods));
-  return newMod;
+  const res = await apiRequest('POST', '/api/moderators', { username });
+  return await res.json();
 }
 
 export async function removeModerator(id: string): Promise<void> {
-  const mods = await getModerators();
-  const filtered = mods.filter(m => m.id !== id);
-  await AsyncStorage.setItem(KEYS.MODERATORS, JSON.stringify(filtered));
+  await apiRequest('DELETE', `/api/moderators/${id}`);
 }
 
 export async function isUserModerator(username: string): Promise<boolean> {
