@@ -124,6 +124,13 @@ export default function ProMarketsScreen() {
   };
 
   const handleDelete = (id: string) => {
+    if (Platform.OS === 'web') {
+      const confirmed = window.confirm('Remove this analysis?');
+      if (confirmed) {
+        deleteAnalysisPost(id, 'four_markets').then(() => loadPosts());
+      }
+      return;
+    }
     Alert.alert('Delete Post', 'Remove this analysis?', [
       { text: 'Cancel', style: 'cancel' },
       { text: 'Delete', style: 'destructive', onPress: async () => {
@@ -145,6 +152,13 @@ export default function ProMarketsScreen() {
   };
 
   const handleDeleteMessage = (id: string) => {
+    if (Platform.OS === 'web') {
+      const confirmed = window.confirm('Remove this message?');
+      if (confirmed) {
+        deleteChatMessage(id, 'four_markets').then(() => loadMessages());
+      }
+      return;
+    }
     Alert.alert('Delete Message', 'Remove this message?', [
       { text: 'Cancel', style: 'cancel' },
       { text: 'Delete', style: 'destructive', onPress: async () => {

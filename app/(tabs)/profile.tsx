@@ -144,6 +144,13 @@ export default function ProfileScreen() {
   };
 
   const handleDeleteEdu = (id: string) => {
+    if (Platform.OS === 'web') {
+      const confirmed = window.confirm('Remove this education post?');
+      if (confirmed) {
+        deleteEducationPost(id).then(() => loadEducation());
+      }
+      return;
+    }
     Alert.alert('Delete Post', 'Remove this education post?', [
       { text: 'Cancel', style: 'cancel' },
       { text: 'Delete', style: 'destructive', onPress: async () => {

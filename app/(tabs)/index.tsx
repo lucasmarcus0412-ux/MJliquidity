@@ -135,6 +135,13 @@ export default function HomeScreen() {
   };
 
   const handleDelete = (id: string) => {
+    if (Platform.OS === 'web') {
+      const confirmed = window.confirm('Are you sure you want to remove this analysis?');
+      if (confirmed) {
+        deleteAnalysisPost(id, 'free').then(() => loadPosts());
+      }
+      return;
+    }
     Alert.alert('Delete Post', 'Are you sure you want to remove this analysis?', [
       { text: 'Cancel', style: 'cancel' },
       { text: 'Delete', style: 'destructive', onPress: async () => {
