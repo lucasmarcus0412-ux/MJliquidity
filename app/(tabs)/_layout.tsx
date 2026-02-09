@@ -15,25 +15,21 @@ function NativeTabLayout() {
         <Icon sf={{ default: "house", selected: "house.fill" }} />
         <Label>Home</Label>
       </NativeTabs.Trigger>
-      <NativeTabs.Trigger name="free">
-        <Icon sf={{ default: "chart.line.uptrend.xyaxis", selected: "chart.line.uptrend.xyaxis" }} />
-        <Label>Free</Label>
-      </NativeTabs.Trigger>
-      <NativeTabs.Trigger name="gold-vip">
+      <NativeTabs.Trigger name="gold-intraday">
         <Icon sf={{ default: "diamond", selected: "diamond.fill" }} />
-        <Label>Gold VIP</Label>
+        <Label>Gold</Label>
       </NativeTabs.Trigger>
-      <NativeTabs.Trigger name="four-markets">
+      <NativeTabs.Trigger name="pro-markets">
         <Icon sf={{ default: "chart.bar", selected: "chart.bar.fill" }} />
-        <Label>4 Markets</Label>
+        <Label>Pro</Label>
       </NativeTabs.Trigger>
-      <NativeTabs.Trigger name="education">
-        <Icon sf={{ default: "book", selected: "book.fill" }} />
-        <Label>Education</Label>
-      </NativeTabs.Trigger>
-      <NativeTabs.Trigger name="traders-hub">
-        <Icon sf={{ default: "briefcase", selected: "briefcase.fill" }} />
+      <NativeTabs.Trigger name="trading-hub">
+        <Icon sf={{ default: "link", selected: "link" }} />
         <Label>Hub</Label>
+      </NativeTabs.Trigger>
+      <NativeTabs.Trigger name="profile">
+        <Icon sf={{ default: "person", selected: "person.fill" }} />
+        <Label>Profile</Label>
       </NativeTabs.Trigger>
     </NativeTabs>
   );
@@ -86,62 +82,49 @@ function ClassicTabLayout() {
         }}
       />
       <Tabs.Screen
-        name="free"
+        name="gold-intraday"
         options={{
-          title: "Free",
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="analytics-outline" size={size} color={color} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="gold-vip"
-        options={{
-          title: "Gold VIP",
+          title: "Gold",
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="diamond-outline" size={size} color={color} />
           ),
         }}
       />
       <Tabs.Screen
-        name="four-markets"
+        name="pro-markets"
         options={{
-          title: "4 Markets",
+          title: "Pro",
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="bar-chart-outline" size={size} color={color} />
           ),
         }}
       />
       <Tabs.Screen
-        name="education"
-        options={{
-          title: "Education",
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="book-outline" size={size} color={color} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="traders-hub"
+        name="trading-hub"
         options={{
           title: "Hub",
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="briefcase-outline" size={size} color={color} />
+            <Ionicons name="link-outline" size={size} color={color} />
           ),
         }}
       />
       <Tabs.Screen
-        name="chat"
-        options={{ href: null }}
+        name="profile"
+        options={{
+          title: "Profile",
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="person-outline" size={size} color={color} />
+          ),
+        }}
       />
-      <Tabs.Screen
-        name="subscribe"
-        options={{ href: null }}
-      />
-      <Tabs.Screen
-        name="settings"
-        options={{ href: null }}
-      />
+      <Tabs.Screen name="chat" options={{ href: null }} />
+      <Tabs.Screen name="subscribe" options={{ href: null }} />
+      <Tabs.Screen name="settings" options={{ href: null }} />
+      <Tabs.Screen name="free" options={{ href: null }} />
+      <Tabs.Screen name="education" options={{ href: null }} />
+      <Tabs.Screen name="gold-vip" options={{ href: null }} />
+      <Tabs.Screen name="four-markets" options={{ href: null }} />
+      <Tabs.Screen name="traders-hub" options={{ href: null }} />
     </Tabs>
   );
 }
