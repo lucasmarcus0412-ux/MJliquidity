@@ -12,6 +12,7 @@ const KEYS = {
   GOLD_VIP_CHAT: 'mjl_gold_vip_chat',
   FOUR_MARKETS_CHAT: 'mjl_four_markets_chat',
   EDUCATION_POSTS: 'mjl_education_posts',
+  MODERATORS: 'mjl_moderators',
 };
 
 export type FeedChannel = 'free' | 'gold_vip' | 'four_markets';
@@ -32,6 +33,13 @@ export interface ChatMessage {
   text: string;
   timestamp: number;
   isAdmin: boolean;
+  isModerator?: boolean;
+}
+
+export interface Moderator {
+  id: string;
+  username: string;
+  addedAt: number;
 }
 
 export interface EducationPost {
@@ -139,6 +147,44 @@ export async function deleteEducationPost(id: string): Promise<void> {
   const posts = await getEducationPosts();
   const filtered = posts.filter(p => p.id !== id);
   await AsyncStorage.setItem(KEYS.EDUCATION_POSTS, JSON.stringify(filtered));
+}
+
+export async function deleteChatMessage(id: string, channel?: ChatChannel): Promise<void> {
+  const messages = await getChatMessages(channel);
+  const filtered = messages.filter(m => m.id !== id);
+  const key = channel ? getChatKey(channel) : KEYS.CHAT_MESSAGES;
+  await AsyncStorage.setItem(key, JSON.stringify(filtered));
+}
+
+export async function getModerators(): Promise<Moderator[]> {
+  const val = await AsyncStorage.getItem(KEYS.MODERATORS);
+  if (!val) return [];
+  return JSON.parse(val);
+}
+
+export async function addModerator(username: string): Promise<Moderator> {
+  const mods = await getModerators();
+  const existing = mods.find(m => m.username.toLowerCase() === username.toLowerCase());
+  if (existing) return existing;
+  const newMod: Moderator = {
+    id: generateId(),
+    username: username.trim(),
+    addedAt: Date.now(),
+  };
+  mods.push(newMod);
+  await AsyncStorage.setItem(KEYS.MODERATORS, JSON.stringify(mods));
+  return newMod;
+}
+
+export async function removeModerator(id: string): Promise<void> {
+  const mods = await getModerators();
+  const filtered = mods.filter(m => m.id !== id);
+  await AsyncStorage.setItem(KEYS.MODERATORS, JSON.stringify(filtered));
+}
+
+export async function isUserModerator(username: string): Promise<boolean> {
+  const mods = await getModerators();
+  return mods.some(m => m.username.toLowerCase() === username.toLowerCase());
 }
 
 export async function getUserName(): Promise<string | null> {
