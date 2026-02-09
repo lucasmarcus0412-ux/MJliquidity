@@ -416,6 +416,20 @@ export default function ProfileScreen() {
           )}
         </View>
 
+        <Text style={[styles.sectionLabel, { color: c.textMuted }]}>CONTACT</Text>
+        <View style={[styles.sectionCard, { backgroundColor: c.card, borderColor: c.cardBorder }]}>
+          <Pressable onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); Linking.openURL('mailto:support@mjliquidity.com'); }} style={styles.settingsRow}>
+            <View style={styles.settingsRowLeft}>
+              <Ionicons name="mail-outline" size={20} color={c.textSecondary} />
+              <View>
+                <Text style={[styles.settingsLabel, { color: c.text }]}>Contact Us</Text>
+                <Text style={[styles.settingsValue, { color: c.textMuted }]}>support@mjliquidity.com</Text>
+              </View>
+            </View>
+            <Ionicons name="chevron-forward" size={18} color={c.textMuted} />
+          </Pressable>
+        </View>
+
         <Text style={[styles.sectionLabel, { color: c.textMuted }]}>LEGAL</Text>
         <View style={[styles.sectionCard, { backgroundColor: c.card, borderColor: c.cardBorder }]}>
           <Pressable onPress={() => setShowDisclaimer(true)} style={styles.settingsRow}>
