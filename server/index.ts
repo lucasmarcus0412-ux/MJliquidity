@@ -170,20 +170,34 @@ function configureExpoAndLanding(app: express.Application) {
   const landingPageTemplate = fs.readFileSync(templatePath, "utf-8");
   const appName = getAppName();
 
+  const distDir = path.resolve(process.cwd(), "dist");
+  const hasWebBuild = fs.existsSync(path.join(distDir, "index.html"));
+
   log("Serving static Expo files with dynamic manifest routing");
+  if (hasWebBuild) {
+    log("Web build detected in dist/ — browser visitors will see the web app");
+  }
 
   app.use((req: Request, res: Response, next: NextFunction) => {
     if (req.path.startsWith("/api")) {
       return next();
     }
 
+    const platform = req.header("expo-platform");
+    if (platform && (platform === "ios" || platform === "android")) {
+      if (req.path === "/" || req.path === "/manifest") {
+        return serveExpoManifest(platform, res);
+      }
+    }
+
     if (req.path !== "/" && req.path !== "/manifest") {
       return next();
     }
 
-    const platform = req.header("expo-platform");
-    if (platform && (platform === "ios" || platform === "android")) {
-      return serveExpoManifest(platform, res);
+    if (hasWebBuild && req.path === "/") {
+      const indexHtml = fs.readFileSync(path.join(distDir, "index.html"), "utf-8");
+      res.setHeader("Content-Type", "text/html; charset=utf-8");
+      return res.status(200).send(indexHtml);
     }
 
     if (req.path === "/") {
@@ -198,8 +212,26 @@ function configureExpoAndLanding(app: express.Application) {
     next();
   });
 
+  if (hasWebBuild) {
+    app.use(express.static(distDir));
+  }
   app.use("/assets", express.static(path.resolve(process.cwd(), "assets")));
   app.use(express.static(path.resolve(process.cwd(), "static-build")));
+
+  if (hasWebBuild) {
+    app.use((req: Request, res: Response, next: NextFunction) => {
+      if (req.path.startsWith("/api") || req.path.startsWith("/manifest")) {
+        return next();
+      }
+      const platform = req.header("expo-platform");
+      if (platform) {
+        return next();
+      }
+      const indexHtml = fs.readFileSync(path.join(distDir, "index.html"), "utf-8");
+      res.setHeader("Content-Type", "text/html; charset=utf-8");
+      return res.status(200).send(indexHtml);
+    });
+  }
 
   log("Expo routing: Checking expo-platform header on / and /manifest");
 }
