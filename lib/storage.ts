@@ -14,6 +14,8 @@ const KEYS = {
   EDUCATION_POSTS: 'mjl_education_posts',
   MODERATORS: 'mjl_moderators',
   SUBSCRIPTION_TIER: 'mjl_subscription_tier',
+  NOTIF_ANALYSIS: 'mjl_notif_analysis',
+  NOTIF_CHAT: 'mjl_notif_chat',
 };
 
 export type SubscriptionTier = 'none' | 'gold_vip' | 'pro' | 'all_access';
@@ -242,4 +244,23 @@ export function hasProAccess(tier: SubscriptionTier): boolean {
 
 export function hasAnySubscription(tier: SubscriptionTier): boolean {
   return tier !== 'none';
+}
+
+export interface NotificationPreferences {
+  analysis: boolean;
+  chat: boolean;
+}
+
+export async function getNotificationPreferences(): Promise<NotificationPreferences> {
+  const analysis = await AsyncStorage.getItem(KEYS.NOTIF_ANALYSIS);
+  const chat = await AsyncStorage.getItem(KEYS.NOTIF_CHAT);
+  return {
+    analysis: analysis === 'true',
+    chat: chat === 'true',
+  };
+}
+
+export async function setNotificationPreference(key: 'analysis' | 'chat', enabled: boolean): Promise<void> {
+  const storageKey = key === 'analysis' ? KEYS.NOTIF_ANALYSIS : KEYS.NOTIF_CHAT;
+  await AsyncStorage.setItem(storageKey, enabled ? 'true' : 'false');
 }
