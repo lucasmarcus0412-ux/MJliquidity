@@ -422,8 +422,30 @@ export default function ProfileScreen() {
             <View style={styles.settingsRowLeft}>
               <Ionicons name="mail-outline" size={20} color={c.textSecondary} />
               <View>
-                <Text style={[styles.settingsLabel, { color: c.text }]}>Contact Us</Text>
+                <Text style={[styles.settingsLabel, { color: c.text }]}>Email Us</Text>
                 <Text style={[styles.settingsValue, { color: c.textMuted }]}>support@mjliquidity.com</Text>
+              </View>
+            </View>
+            <Ionicons name="chevron-forward" size={18} color={c.textMuted} />
+          </Pressable>
+          <View style={[styles.divider, { backgroundColor: c.border }]} />
+          <Pressable onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); Linking.openURL('https://mjliquidity.com'); }} style={styles.settingsRow}>
+            <View style={styles.settingsRowLeft}>
+              <Ionicons name="globe-outline" size={20} color={c.textSecondary} />
+              <View>
+                <Text style={[styles.settingsLabel, { color: c.text }]}>Website</Text>
+                <Text style={[styles.settingsValue, { color: c.textMuted }]}>mjliquidity.com</Text>
+              </View>
+            </View>
+            <Ionicons name="chevron-forward" size={18} color={c.textMuted} />
+          </Pressable>
+          <View style={[styles.divider, { backgroundColor: c.border }]} />
+          <Pressable onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); Linking.openURL('https://www.tiktok.com/@mjliquidity?_r=1&_t=ZN-93m0iMJvgaE'); }} style={styles.settingsRow}>
+            <View style={styles.settingsRowLeft}>
+              <Ionicons name="logo-tiktok" size={20} color={c.textSecondary} />
+              <View>
+                <Text style={[styles.settingsLabel, { color: c.text }]}>TikTok</Text>
+                <Text style={[styles.settingsValue, { color: c.textMuted }]}>@mjliquidity</Text>
               </View>
             </View>
             <Ionicons name="chevron-forward" size={18} color={c.textMuted} />
