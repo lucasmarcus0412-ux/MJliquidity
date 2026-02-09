@@ -123,21 +123,26 @@ export default function ProMarketsScreen() {
     await loadPosts();
   };
 
-  const handleDelete = (id: string) => {
+  const handleDelete = async (id: string) => {
+    let confirmed = false;
     if (Platform.OS === 'web') {
-      const confirmed = window.confirm('Remove this analysis?');
-      if (confirmed) {
-        deleteAnalysisPost(id, 'four_markets').then(() => loadPosts());
-      }
-      return;
+      confirmed = window.confirm('Remove this analysis?');
+    } else {
+      confirmed = await new Promise<boolean>((resolve) => {
+        Alert.alert('Delete Post', 'Remove this analysis?', [
+          { text: 'Cancel', style: 'cancel', onPress: () => resolve(false) },
+          { text: 'Delete', style: 'destructive', onPress: () => resolve(true) },
+        ]);
+      });
     }
-    Alert.alert('Delete Post', 'Remove this analysis?', [
-      { text: 'Cancel', style: 'cancel' },
-      { text: 'Delete', style: 'destructive', onPress: async () => {
+    if (confirmed) {
+      try {
         await deleteAnalysisPost(id, 'four_markets');
         await loadPosts();
-      }},
-    ]);
+      } catch (err) {
+        console.error('Delete failed:', err);
+      }
+    }
   };
 
   const handleSendMessage = async () => {
@@ -151,22 +156,27 @@ export default function ProMarketsScreen() {
     setTimeout(() => flatListRef.current?.scrollToEnd({ animated: true }), 100);
   };
 
-  const handleDeleteMessage = (id: string) => {
+  const handleDeleteMessage = async (id: string) => {
+    let confirmed = false;
     if (Platform.OS === 'web') {
-      const confirmed = window.confirm('Remove this message?');
-      if (confirmed) {
-        deleteChatMessage(id, 'four_markets').then(() => loadMessages());
-      }
-      return;
+      confirmed = window.confirm('Remove this message?');
+    } else {
+      confirmed = await new Promise<boolean>((resolve) => {
+        Alert.alert('Delete Message', 'Remove this message?', [
+          { text: 'Cancel', style: 'cancel', onPress: () => resolve(false) },
+          { text: 'Delete', style: 'destructive', onPress: () => resolve(true) },
+        ]);
+      });
     }
-    Alert.alert('Delete Message', 'Remove this message?', [
-      { text: 'Cancel', style: 'cancel' },
-      { text: 'Delete', style: 'destructive', onPress: async () => {
+    if (confirmed) {
+      try {
         await deleteChatMessage(id, 'four_markets');
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
         await loadMessages();
-      }},
-    ]);
+      } catch (err) {
+        console.error('Delete failed:', err);
+      }
+    }
   };
 
   const getMarketLabel = (cat: string) => {

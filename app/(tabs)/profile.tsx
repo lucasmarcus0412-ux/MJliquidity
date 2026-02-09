@@ -143,21 +143,26 @@ export default function ProfileScreen() {
     await loadEducation();
   };
 
-  const handleDeleteEdu = (id: string) => {
+  const handleDeleteEdu = async (id: string) => {
+    let confirmed = false;
     if (Platform.OS === 'web') {
-      const confirmed = window.confirm('Remove this education post?');
-      if (confirmed) {
-        deleteEducationPost(id).then(() => loadEducation());
-      }
-      return;
+      confirmed = window.confirm('Remove this education post?');
+    } else {
+      confirmed = await new Promise<boolean>((resolve) => {
+        Alert.alert('Delete Post', 'Remove this education post?', [
+          { text: 'Cancel', style: 'cancel', onPress: () => resolve(false) },
+          { text: 'Delete', style: 'destructive', onPress: () => resolve(true) },
+        ]);
+      });
     }
-    Alert.alert('Delete Post', 'Remove this education post?', [
-      { text: 'Cancel', style: 'cancel' },
-      { text: 'Delete', style: 'destructive', onPress: async () => {
+    if (confirmed) {
+      try {
         await deleteEducationPost(id);
         await loadEducation();
-      }},
-    ]);
+      } catch (err) {
+        console.error('Delete failed:', err);
+      }
+    }
   };
 
   const webTopInset = Platform.OS === 'web' ? 67 : 0;

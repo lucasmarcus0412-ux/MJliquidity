@@ -67,9 +67,10 @@ function AnalysisCard({ post, isAdmin, onDelete }: {
                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                 onDelete(post.id);
               }}
-              hitSlop={12}
+              hitSlop={20}
+              style={{ padding: 8 }}
             >
-              <Ionicons name="trash-outline" size={16} color={c.textMuted} />
+              <Ionicons name="trash-outline" size={18} color={c.textMuted} />
             </Pressable>
           )}
         </View>
@@ -134,22 +135,27 @@ export default function HomeScreen() {
     await loadPosts();
   };
 
-  const handleDelete = (id: string) => {
+  const handleDelete = async (id: string) => {
+    let confirmed = false;
     if (Platform.OS === 'web') {
-      const confirmed = window.confirm('Are you sure you want to remove this analysis?');
-      if (confirmed) {
-        deleteAnalysisPost(id, 'free').then(() => loadPosts());
-      }
-      return;
+      confirmed = window.confirm('Are you sure you want to remove this analysis?');
+    } else {
+      confirmed = await new Promise<boolean>((resolve) => {
+        Alert.alert('Delete Post', 'Are you sure you want to remove this analysis?', [
+          { text: 'Cancel', style: 'cancel', onPress: () => resolve(false) },
+          { text: 'Delete', style: 'destructive', onPress: () => resolve(true) },
+        ]);
+      });
     }
-    Alert.alert('Delete Post', 'Are you sure you want to remove this analysis?', [
-      { text: 'Cancel', style: 'cancel' },
-      { text: 'Delete', style: 'destructive', onPress: async () => {
+    if (confirmed) {
+      try {
         await deleteAnalysisPost(id, 'free');
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
         await loadPosts();
-      }},
-    ]);
+      } catch (err) {
+        console.error('Delete failed:', err);
+      }
+    }
   };
 
   const webTopInset = Platform.OS === 'web' ? 67 : 0;
