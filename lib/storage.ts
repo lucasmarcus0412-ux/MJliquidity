@@ -25,6 +25,7 @@ export interface AnalysisPost {
   category: 'forex' | 'indices' | 'crypto' | 'commodities' | 'general' | 'xauusd' | 'nq' | 'es' | 'btc';
   timestamp: number;
   channel: FeedChannel;
+  imageUri?: string;
 }
 
 export interface ChatMessage {

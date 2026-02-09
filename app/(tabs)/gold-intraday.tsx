@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useRef } from 'react';
+import React, { useState, useCallback, useRef, useMemo } from 'react';
 import {
   StyleSheet,
   Text,
@@ -11,7 +11,9 @@ import {
   Platform,
   RefreshControl,
   KeyboardAvoidingView,
+  Image,
 } from 'react-native';
+import * as ImagePicker from 'expo-image-picker';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
@@ -62,8 +64,18 @@ export default function GoldIntradayScreen() {
   const [inputText, setInputText] = useState('');
   const [showNamePrompt, setShowNamePrompt] = useState(false);
   const [nameInput, setNameInput] = useState('');
+  const [imageUri, setImageUri] = useState<string | null>(null);
   const flatListRef = useRef<FlatList>(null);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const pickImage = async () => {
+    const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: 'images', quality: 0.7, base64: true });
+    if (!result.canceled && result.assets[0]) {
+      setImageUri(result.assets[0].uri);
+    }
+  };
+
+  const memberCount = useMemo(() => new Set(messages.map(m => m.username)).size, [messages]);
 
   const loadPosts = useCallback(async () => {
     const data = await getAnalysisPosts('gold_vip');
@@ -95,9 +107,9 @@ export default function GoldIntradayScreen() {
       Alert.alert('Missing Info', 'Please add a title and content.');
       return;
     }
-    await addAnalysisPost({ title: title.trim(), content: content.trim(), category: 'xauusd', channel: 'gold_vip' }, 'gold_vip');
+    await addAnalysisPost({ title: title.trim(), content: content.trim(), category: 'xauusd', channel: 'gold_vip', imageUri: imageUri || undefined }, 'gold_vip');
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    setTitle(''); setContent(''); setShowCompose(false);
+    setTitle(''); setContent(''); setImageUri(null); setShowCompose(false);
     await loadPosts();
   };
 
@@ -175,6 +187,11 @@ export default function GoldIntradayScreen() {
             <Text style={[styles.tabText, { color: activeTab === tab ? c.gold : c.textMuted }]}>
               {tab === 'analysis' ? 'Analysis' : 'Chat'}
             </Text>
+            {tab === 'chat' && activeTab === 'chat' && memberCount > 0 && (
+              <View style={{ backgroundColor: c.goldMuted, borderRadius: 10, paddingHorizontal: 6, paddingVertical: 1, marginLeft: 6 }}>
+                <Text style={{ fontSize: 11, fontFamily: 'DMSans_600SemiBold', color: c.gold }}>{memberCount}</Text>
+              </View>
+            )}
           </Pressable>
         ))}
       </View>
@@ -201,6 +218,9 @@ export default function GoldIntradayScreen() {
               </View>
               <Text style={[styles.cardTitle, { color: c.text }]}>{item.title}</Text>
               <Text style={[styles.cardContent, { color: c.textSecondary }]}>{item.content}</Text>
+              {item.imageUri && (
+                <Image source={{ uri: item.imageUri }} style={{ width: '100%', height: 200, borderRadius: 12, marginBottom: 12 }} resizeMode="cover" />
+              )}
               <View style={styles.cardFooter}>
                 <View style={styles.adminBadge}>
                   <View style={[styles.adminDot, { backgroundColor: c.gold }]} />
@@ -347,6 +367,19 @@ export default function GoldIntradayScreen() {
                 <Ionicons name="diamond-outline" size={14} color={c.gold} />
                 <Text style={[styles.categoryText, { color: c.gold }]}>XAUUSD</Text>
               </View>
+              <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
+                <Pressable onPress={pickImage} style={{ padding: 8, borderRadius: 12, backgroundColor: c.card }}>
+                  <Ionicons name="image-outline" size={22} color={c.gold} />
+                </Pressable>
+              </View>
+              {imageUri && (
+                <View style={{ marginBottom: 12 }}>
+                  <Image source={{ uri: imageUri }} style={{ width: '100%', height: 200, borderRadius: 12 }} resizeMode="cover" />
+                  <Pressable onPress={() => setImageUri(null)} style={{ position: 'absolute', top: 8, right: 8, backgroundColor: 'rgba(0,0,0,0.6)', borderRadius: 12, width: 24, height: 24, alignItems: 'center', justifyContent: 'center' }}>
+                    <Ionicons name="close" size={16} color="#fff" />
+                  </Pressable>
+                </View>
+              )}
               <TextInput
                 placeholder="Title"
                 placeholderTextColor={c.textMuted}

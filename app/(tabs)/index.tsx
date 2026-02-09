@@ -1,4 +1,5 @@
 import React, { useState, useCallback } from 'react';
+import * as ImagePicker from 'expo-image-picker';
 import {
   StyleSheet,
   Text,
@@ -73,6 +74,9 @@ function AnalysisCard({ post, isAdmin, onDelete }: {
       </View>
       <Text style={[styles.cardTitle, { color: c.text }]}>{post.title}</Text>
       <Text style={[styles.cardContent, { color: c.textSecondary }]}>{post.content}</Text>
+      {post.imageUri && (
+        <Image source={{ uri: post.imageUri }} style={{ width: '100%', height: 200, borderRadius: 12, marginBottom: 12 }} resizeMode="cover" />
+      )}
       <View style={styles.cardFooter}>
         <View style={styles.adminBadge}>
           <View style={[styles.adminDot, { backgroundColor: c.gold }]} />
@@ -93,6 +97,14 @@ export default function HomeScreen() {
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<Category>('general');
+  const [imageUri, setImageUri] = useState<string | null>(null);
+
+  const pickImage = async () => {
+    const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: 'images', quality: 0.7, base64: true });
+    if (!result.canceled && result.assets[0]) {
+      setImageUri(result.assets[0].uri);
+    }
+  };
 
   const loadPosts = useCallback(async () => {
     const data = await getAnalysisPosts('free');
@@ -114,9 +126,9 @@ export default function HomeScreen() {
       Alert.alert('Missing Info', 'Please add a title and content.');
       return;
     }
-    await addAnalysisPost({ title: title.trim(), content: content.trim(), category: selectedCategory, channel: 'free' }, 'free');
+    await addAnalysisPost({ title: title.trim(), content: content.trim(), category: selectedCategory, channel: 'free', imageUri: imageUri || undefined }, 'free');
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    setTitle(''); setContent(''); setSelectedCategory('general'); setShowCompose(false);
+    setTitle(''); setContent(''); setSelectedCategory('general'); setImageUri(null); setShowCompose(false);
     await loadPosts();
   };
 
@@ -202,6 +214,19 @@ export default function HomeScreen() {
                   </Pressable>
                 ))}
               </View>
+              <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
+                <Pressable onPress={pickImage} style={{ padding: 8, borderRadius: 12, backgroundColor: c.card }}>
+                  <Ionicons name="image-outline" size={22} color={c.gold} />
+                </Pressable>
+              </View>
+              {imageUri && (
+                <View style={{ marginBottom: 12 }}>
+                  <Image source={{ uri: imageUri }} style={{ width: '100%', height: 200, borderRadius: 12 }} resizeMode="cover" />
+                  <Pressable onPress={() => setImageUri(null)} style={{ position: 'absolute', top: 8, right: 8, backgroundColor: 'rgba(0,0,0,0.6)', borderRadius: 12, width: 24, height: 24, alignItems: 'center', justifyContent: 'center' }}>
+                    <Ionicons name="close" size={16} color="#fff" />
+                  </Pressable>
+                </View>
+              )}
               <TextInput
                 placeholder="Title"
                 placeholderTextColor={c.textMuted}
