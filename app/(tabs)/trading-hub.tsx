@@ -122,11 +122,21 @@ export default function TradingHubScreen() {
         ))}
 
         <View style={[styles.disclaimerSection, { borderColor: c.border }]}>
-          <Text style={[styles.disclaimerTitle, { color: c.textMuted }]}>Disclaimer</Text>
+          <Text style={[styles.disclaimerTitle, { color: c.textMuted }]}>MJliquidity Disclaimer</Text>
           <Text style={[styles.disclaimerText, { color: c.textMuted }]}>
             MJliquidity provides market analysis, educational content, and informational tools only.
-            We do not provide financial advice or trading recommendations.
-            Trading financial markets involves significant risk. You are solely responsible for your own trading decisions.
+          </Text>
+          <Text style={[styles.disclaimerText, { color: c.textMuted, marginTop: 8 }]}>
+            We do not provide financial advice, investment advice, portfolio management, or trading recommendations.
+          </Text>
+          <Text style={[styles.disclaimerText, { color: c.textMuted, marginTop: 8 }]}>
+            All content shared inside the app, including charts, levels, scenarios, commentary, or educational material, is for educational and informational purposes only and should not be considered financial advice or a solicitation to buy or sell any financial instrument.
+          </Text>
+          <Text style={[styles.disclaimerText, { color: c.textMuted, marginTop: 8 }]}>
+            Trading financial markets involves significant risk. Past performance does not guarantee future results. You may lose part or all of your capital.
+          </Text>
+          <Text style={[styles.disclaimerText, { color: c.textMuted, marginTop: 8 }]}>
+            You are solely responsible for your own trading decisions and risk management.
           </Text>
         </View>
       </ScrollView>

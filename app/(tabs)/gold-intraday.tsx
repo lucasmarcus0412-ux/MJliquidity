@@ -238,6 +238,14 @@ export default function GoldIntradayScreen() {
             showsVerticalScrollIndicator={false}
             onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: false })}
             keyboardShouldPersistTaps="handled"
+            ListHeaderComponent={
+              <View style={[styles.guidelinesBanner, { backgroundColor: c.goldMuted, borderColor: 'rgba(201, 168, 76, 0.15)' }]}>
+                <Ionicons name="information-circle-outline" size={14} color={c.gold} />
+                <Text style={[styles.guidelinesText, { color: c.goldLight }]}>
+                  Respectful discussion only. No signals, spam, or financial advice.
+                </Text>
+              </View>
+            }
             ListEmptyComponent={
               <View style={styles.emptyState}>
                 <Ionicons name="chatbubbles-outline" size={48} color={c.textMuted} />
@@ -388,4 +396,6 @@ const styles = StyleSheet.create({
   postBtnText: { fontSize: 14, fontFamily: 'DMSans_700Bold' },
   titleInput: { fontSize: 20, fontFamily: 'DMSans_700Bold', paddingVertical: 12, borderBottomWidth: 1, marginBottom: 12 },
   contentInput: { fontSize: 15, fontFamily: 'DMSans_400Regular', flex: 1, lineHeight: 22 },
+  guidelinesBanner: { flexDirection: 'row', alignItems: 'center', gap: 8, marginHorizontal: 16, marginBottom: 8, paddingHorizontal: 12, paddingVertical: 8, borderRadius: 10, borderWidth: 1 },
+  guidelinesText: { fontSize: 12, fontFamily: 'DMSans_400Regular', flex: 1 },
 });

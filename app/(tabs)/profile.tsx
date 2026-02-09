@@ -80,6 +80,8 @@ export default function ProfileScreen() {
   const [showComposeEdu, setShowComposeEdu] = useState(false);
   const [eduTitle, setEduTitle] = useState('');
   const [eduContent, setEduContent] = useState('');
+  const [showDisclaimer, setShowDisclaimer] = useState(false);
+  const [showGuidelines, setShowGuidelines] = useState(false);
 
   const loadEducation = useCallback(async () => {
     const data = await getEducationPosts();
@@ -397,7 +399,7 @@ export default function ProfileScreen() {
 
         <Text style={[styles.sectionLabel, { color: c.textMuted }]}>LEGAL</Text>
         <View style={[styles.sectionCard, { backgroundColor: c.card, borderColor: c.cardBorder }]}>
-          <View style={styles.settingsRow}>
+          <Pressable onPress={() => setShowDisclaimer(true)} style={styles.settingsRow}>
             <View style={styles.settingsRowLeft}>
               <Ionicons name="document-text-outline" size={20} color={c.textSecondary} />
               <View>
@@ -405,7 +407,19 @@ export default function ProfileScreen() {
                 <Text style={[styles.settingsValue, { color: c.textMuted }]}>Not financial advice</Text>
               </View>
             </View>
-          </View>
+            <Ionicons name="chevron-forward" size={18} color={c.textMuted} />
+          </Pressable>
+          <View style={[styles.divider, { backgroundColor: c.border }]} />
+          <Pressable onPress={() => setShowGuidelines(true)} style={styles.settingsRow}>
+            <View style={styles.settingsRowLeft}>
+              <Ionicons name="chatbubbles-outline" size={20} color={c.textSecondary} />
+              <View>
+                <Text style={[styles.settingsLabel, { color: c.text }]}>Community Guidelines</Text>
+                <Text style={[styles.settingsValue, { color: c.textMuted }]}>Chat rules & conduct</Text>
+              </View>
+            </View>
+            <Ionicons name="chevron-forward" size={18} color={c.textMuted} />
+          </Pressable>
           <View style={[styles.divider, { backgroundColor: c.border }]} />
           <View style={styles.settingsRow}>
             <View style={styles.settingsRowLeft}>
@@ -418,6 +432,64 @@ export default function ProfileScreen() {
           </View>
         </View>
       </ScrollView>
+
+      <Modal visible={showDisclaimer} animationType="slide" transparent>
+        <View style={styles.modalOverlay}>
+          <View style={[styles.legalModal, { backgroundColor: c.surface }]}>
+            <View style={styles.legalModalHeader}>
+              <Text style={[styles.legalModalTitle, { color: c.gold }]}>MJliquidity Disclaimer</Text>
+              <Pressable onPress={() => setShowDisclaimer(false)} hitSlop={12}>
+                <Ionicons name="close" size={24} color={c.textSecondary} />
+              </Pressable>
+            </View>
+            <ScrollView showsVerticalScrollIndicator={false} style={styles.legalScroll}>
+              <Text style={[styles.legalText, { color: c.textSecondary }]}>
+                MJliquidity provides market analysis, educational content, and informational tools only.
+              </Text>
+              <Text style={[styles.legalText, { color: c.textSecondary, marginTop: 12 }]}>
+                We do not provide financial advice, investment advice, portfolio management, or trading recommendations.
+              </Text>
+              <Text style={[styles.legalText, { color: c.textSecondary, marginTop: 12 }]}>
+                All content shared inside the app, including charts, levels, scenarios, commentary, or educational material, is for educational and informational purposes only and should not be considered financial advice or a solicitation to buy or sell any financial instrument.
+              </Text>
+              <Text style={[styles.legalText, { marginTop: 16, fontFamily: 'DMSans_600SemiBold', color: c.text }]}>
+                Trading financial markets involves significant risk.{'\n'}Past performance does not guarantee future results.{'\n'}You may lose part or all of your capital.
+              </Text>
+              <Text style={[styles.legalText, { color: c.textSecondary, marginTop: 12 }]}>
+                You are solely responsible for your own trading decisions and risk management.
+              </Text>
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
+
+      <Modal visible={showGuidelines} animationType="slide" transparent>
+        <View style={styles.modalOverlay}>
+          <View style={[styles.legalModal, { backgroundColor: c.surface }]}>
+            <View style={styles.legalModalHeader}>
+              <Text style={[styles.legalModalTitle, { color: c.gold }]}>Community Guidelines</Text>
+              <Pressable onPress={() => setShowGuidelines(false)} hitSlop={12}>
+                <Ionicons name="close" size={24} color={c.textSecondary} />
+              </Pressable>
+            </View>
+            <ScrollView showsVerticalScrollIndicator={false} style={styles.legalScroll}>
+              {[
+                'Respectful discussion only',
+                'No signals or "calls"',
+                'No promoting other groups',
+                'No spam',
+                'No financial advice',
+                'Analysis & education focused',
+              ].map((rule, i) => (
+                <View key={i} style={styles.guidelineRow}>
+                  <View style={[styles.guidelineDot, { backgroundColor: c.gold }]} />
+                  <Text style={[styles.guidelineText, { color: c.textSecondary }]}>{rule}</Text>
+                </View>
+              ))}
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -476,4 +548,12 @@ const styles = StyleSheet.create({
   postBtnText: { fontSize: 14, fontFamily: 'DMSans_700Bold' },
   titleInput: { fontSize: 20, fontFamily: 'DMSans_700Bold', paddingVertical: 12, borderBottomWidth: 1, marginBottom: 12 },
   contentInput: { fontSize: 15, fontFamily: 'DMSans_400Regular', flex: 1, lineHeight: 22 },
+  legalModal: { borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 20, maxHeight: '80%' },
+  legalModalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 },
+  legalModalTitle: { fontSize: 20, fontFamily: 'DMSans_700Bold' },
+  legalScroll: { paddingBottom: 20 },
+  legalText: { fontSize: 14, fontFamily: 'DMSans_400Regular', lineHeight: 22 },
+  guidelineRow: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 10 },
+  guidelineDot: { width: 6, height: 6, borderRadius: 3 },
+  guidelineText: { fontSize: 15, fontFamily: 'DMSans_400Regular', flex: 1 },
 });
