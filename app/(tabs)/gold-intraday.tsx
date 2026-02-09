@@ -147,7 +147,7 @@ export default function GoldIntradayScreen() {
             <Ionicons name="diamond" size={20} color={c.gold} />
             <Text style={[styles.headerTitle, { color: c.gold }]}>Gold Intraday</Text>
           </View>
-          <Text style={[styles.headerSubtitle, { color: c.textMuted }]}>XAUUSD Institutional Analysis</Text>
+          <Text style={[styles.headerSubtitle, { color: c.textMuted }]}>XAUUSD Market Analysis</Text>
         </View>
         {isAdmin && activeTab === 'analysis' && (
           <Pressable
@@ -217,7 +217,7 @@ export default function GoldIntradayScreen() {
               <Ionicons name="lock-closed-outline" size={48} color={c.textMuted} />
               <Text style={[styles.emptyTitle, { color: c.textSecondary }]}>Gold VIP Content</Text>
               <Text style={[styles.emptyText, { color: c.textMuted }]}>
-                Subscribe to unlock institutional XAUUSD analysis
+                Subscribe to unlock XAUUSD market analysis
               </Text>
             </View>
           }

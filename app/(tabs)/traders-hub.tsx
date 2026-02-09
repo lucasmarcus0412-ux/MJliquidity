@@ -37,14 +37,14 @@ const MEMBERSHIP_TIERS = [
   {
     name: 'Gold VIP',
     price: '75',
-    description: 'Full Gold institutional analysis',
+    description: 'Full Gold market analysis',
     features: ['XAUUSD liquidity zones & reaction areas', 'Daily scenario mapping', 'Members-only Gold chat'],
   },
   {
     name: 'Pro (4 Markets)',
     price: '75',
     description: 'Multi-asset coverage',
-    features: ['NQ, ES, BTC, XAU analysis', 'Consolidated institutional analysis', 'Members-only Pro chat'],
+    features: ['NQ, ES, BTC, XAU analysis', 'Consolidated market analysis', 'Members-only Pro chat'],
   },
   {
     name: 'All Access',

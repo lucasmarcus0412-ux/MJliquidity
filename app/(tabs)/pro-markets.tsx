@@ -230,7 +230,7 @@ export default function ProMarketsScreen() {
               <Ionicons name="lock-closed-outline" size={48} color={c.textMuted} />
               <Text style={[styles.emptyTitle, { color: c.textSecondary }]}>Pro Markets Content</Text>
               <Text style={[styles.emptyText, { color: c.textMuted }]}>
-                Subscribe to unlock multi-asset institutional analysis
+                Subscribe to unlock multi-asset market analysis
               </Text>
             </View>
           }

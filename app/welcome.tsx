@@ -66,7 +66,7 @@ export default function WelcomeScreen() {
           <View style={styles.featuresRow}>
             <View style={styles.featurePill}>
               <View style={[styles.featureDot, { backgroundColor: c.gold }]} />
-              <Text style={[styles.featureText, { color: c.textSecondary }]}>Institutional Analysis</Text>
+              <Text style={[styles.featureText, { color: c.textSecondary }]}>Market Analysis</Text>
             </View>
             <View style={styles.featurePill}>
               <View style={[styles.featureDot, { backgroundColor: c.gold }]} />

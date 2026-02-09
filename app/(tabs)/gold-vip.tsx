@@ -140,7 +140,7 @@ export default function GoldVipScreen() {
             <Ionicons name="diamond" size={20} color={c.gold} />
             <Text style={[styles.headerTitle, { color: c.gold }]}>Gold VIP</Text>
           </View>
-          <Text style={[styles.headerSubtitle, { color: c.textMuted }]}>XAUUSD Institutional Analysis</Text>
+          <Text style={[styles.headerSubtitle, { color: c.textMuted }]}>XAUUSD Market Analysis</Text>
         </View>
         {isAdmin && activeTab === 'analysis' && (
           <Pressable
@@ -205,7 +205,7 @@ export default function GoldVipScreen() {
               <Ionicons name="diamond-outline" size={48} color={c.textMuted} />
               <Text style={[styles.emptyTitle, { color: c.textSecondary }]}>No Gold VIP Analysis Yet</Text>
               <Text style={[styles.emptyText, { color: c.textMuted }]}>
-                Institutional XAUUSD analysis will appear here
+                XAUUSD market analysis will appear here
               </Text>
             </View>
           }

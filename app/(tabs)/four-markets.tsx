@@ -213,7 +213,7 @@ export default function FourMarketsScreen() {
               <Ionicons name="bar-chart-outline" size={48} color={c.textMuted} />
               <Text style={[styles.emptyTitle, { color: c.textSecondary }]}>No 4 Markets Analysis Yet</Text>
               <Text style={[styles.emptyText, { color: c.textMuted }]}>
-                Multi-asset institutional analysis will appear here
+                Multi-asset market analysis will appear here
               </Text>
             </View>
           }
