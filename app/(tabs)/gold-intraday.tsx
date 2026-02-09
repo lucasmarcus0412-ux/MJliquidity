@@ -150,11 +150,11 @@ export default function GoldIntradayScreen() {
   const webTopInset = Platform.OS === 'web' ? 67 : 0;
 
   const handleSubscribe = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     if (subscriptionUrl) {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
       Linking.openURL(subscriptionUrl).catch(() => Alert.alert('Error', 'Could not open link.'));
     } else {
-      Alert.alert('Coming Soon', 'Subscription links will be available soon.');
+      Alert.alert('Subscribe', 'Visit the Profile tab to view subscription plans and get access.');
     }
   };
 

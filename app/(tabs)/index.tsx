@@ -183,7 +183,7 @@ export default function HomeScreen() {
               if (subscriptionUrl) {
                 Linking.openURL(subscriptionUrl).catch(() => {});
               } else {
-                Alert.alert('Coming Soon', 'Subscription links will be available soon.');
+                Alert.alert('Subscribe', 'Visit the Profile tab to view subscription plans and get access.');
               }
             }}
             style={[styles.vipBanner, { borderColor: c.gold }]}

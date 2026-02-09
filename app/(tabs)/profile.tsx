@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useRef } from 'react';
 import {
   StyleSheet,
   Text,
@@ -70,6 +70,7 @@ export default function ProfileScreen() {
   const insets = useSafeAreaInsets();
   const { isAdmin, isModerator, userName, subscriptionUrl, loginAdmin, logoutAdmin, setUserNameValue, moderators, addModeratorByName, removeModeratorById, isSubscribed } = useApp();
 
+  const scrollRef = useRef<ScrollView>(null);
   const [activeSection, setActiveSection] = useState<ActiveSection>('main');
   const [showLogin, setShowLogin] = useState(false);
   const [password, setPassword] = useState('');
@@ -121,11 +122,11 @@ export default function ProfileScreen() {
   };
 
   const handleSubscribe = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     if (subscriptionUrl) {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
       Linking.openURL(subscriptionUrl).catch(() => Alert.alert('Error', 'Could not open link.'));
     } else {
-      Alert.alert('Coming Soon', 'Subscription links will be available soon.');
+      Alert.alert('Coming Soon', 'Subscription payment links will be available soon. Stay tuned!');
     }
   };
 
@@ -257,6 +258,7 @@ export default function ProfileScreen() {
   return (
     <View style={[styles.container, { backgroundColor: c.background }]}>
       <ScrollView
+        ref={scrollRef}
         contentContainerStyle={[styles.scrollContent, {
           paddingTop: insets.top + 12 + webTopInset,
           paddingBottom: Platform.OS === 'web' ? 84 : 120,
@@ -311,7 +313,8 @@ export default function ProfileScreen() {
               if (isSubscribed) {
                 setActiveSection('education');
               } else {
-                handleSubscribe();
+                scrollRef.current?.scrollTo({ y: 0, animated: true });
+                Alert.alert('Subscription Required', 'Choose a subscription plan above to unlock Education content.');
               }
             }}
             style={styles.settingsRow}
