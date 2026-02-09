@@ -3,7 +3,7 @@ import { Tabs } from "expo-router";
 import { NativeTabs, Icon, Label } from "expo-router/unstable-native-tabs";
 import { BlurView } from "expo-blur";
 import { Platform, StyleSheet, View } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
+import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import React from "react";
 import Colors from "@/constants/colors";
@@ -16,7 +16,7 @@ function NativeTabLayout() {
         <Label>Home</Label>
       </NativeTabs.Trigger>
       <NativeTabs.Trigger name="gold-intraday">
-        <Icon sf={{ default: "diamond", selected: "diamond.fill" }} />
+        <Icon sf={{ default: "chart.bar.horizontal.page", selected: "chart.bar.horizontal.page.fill" }} />
         <Label>Gold</Label>
       </NativeTabs.Trigger>
       <NativeTabs.Trigger name="pro-markets">
@@ -86,7 +86,7 @@ function ClassicTabLayout() {
         options={{
           title: "Gold",
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="diamond-outline" size={size} color={color} />
+            <MaterialCommunityIcons name="gold" size={size} color={color} />
           ),
         }}
       />
