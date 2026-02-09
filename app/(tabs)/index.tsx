@@ -117,7 +117,7 @@ export default function HomeScreen() {
       locked: true,
       onPress: () => {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-        router.push('/(tabs)/subscribe' as any);
+        router.push('/(tabs)/gold-vip' as any);
       },
     },
     {
@@ -126,7 +126,7 @@ export default function HomeScreen() {
       locked: true,
       onPress: () => {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-        router.push('/(tabs)/subscribe' as any);
+        router.push('/(tabs)/four-markets' as any);
       },
     },
     {
@@ -134,7 +134,7 @@ export default function HomeScreen() {
       icon: 'school-outline',
       onPress: () => {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-        router.push('/(tabs)/free' as any);
+        router.push('/(tabs)/education' as any);
       },
     },
     {
@@ -142,7 +142,7 @@ export default function HomeScreen() {
       icon: 'briefcase-outline',
       onPress: () => {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-        router.push('/(tabs)/chat' as any);
+        router.push('/(tabs)/traders-hub' as any);
       },
     },
     {
