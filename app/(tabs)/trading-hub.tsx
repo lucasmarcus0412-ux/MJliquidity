@@ -19,7 +19,7 @@ const PROP_FIRMS = [
     name: 'MJ-Markets',
     description: 'Funded trading challenges',
     discount: 'VIP20',
-    url: '',
+    url: 'https://mj-markets.com',
   },
 ];
 
