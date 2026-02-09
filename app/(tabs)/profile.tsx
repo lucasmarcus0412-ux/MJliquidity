@@ -13,11 +13,13 @@ import {
   FlatList,
   RefreshControl,
   KeyboardAvoidingView,
+  Switch,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
+import * as Notifications from 'expo-notifications';
 import Colors from '@/constants/colors';
 import { useApp } from '@/lib/AppContext';
 import {
@@ -68,7 +70,7 @@ function formatTime(ts: number): string {
 export default function ProfileScreen() {
   const c = Colors.dark;
   const insets = useSafeAreaInsets();
-  const { isAdmin, isModerator, userName, subscriptionUrl, loginAdmin, logoutAdmin, setUserNameValue, moderators, addModeratorByName, removeModeratorById, isSubscribed } = useApp();
+  const { isAdmin, isModerator, userName, subscriptionUrl, loginAdmin, logoutAdmin, setUserNameValue, moderators, addModeratorByName, removeModeratorById, isSubscribed, notificationPrefs, setNotificationPref } = useApp();
 
   const scrollRef = useRef<ScrollView>(null);
   const [activeSection, setActiveSection] = useState<ActiveSection>('main');
@@ -369,6 +371,61 @@ export default function ProfileScreen() {
               <Ionicons name="chevron-forward" size={18} color={c.textMuted} />
             </Pressable>
           )}
+        </View>
+
+        <Text style={[styles.sectionLabel, { color: c.textMuted }]}>NOTIFICATIONS</Text>
+        <View style={[styles.sectionCard, { backgroundColor: c.card, borderColor: c.cardBorder }]}>
+          <View style={styles.settingsRow}>
+            <View style={styles.settingsRowLeft}>
+              <Ionicons name="document-text-outline" size={20} color={c.textSecondary} />
+              <View>
+                <Text style={[styles.settingsLabel, { color: c.text }]}>Analysis Posts</Text>
+                <Text style={[styles.settingsValue, { color: c.textMuted }]}>New analysis notifications</Text>
+              </View>
+            </View>
+            <Switch
+              value={notificationPrefs.analysis}
+              onValueChange={async (val) => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                if (val) {
+                  const { status } = await Notifications.requestPermissionsAsync();
+                  if (status !== 'granted') {
+                    Alert.alert('Permission Needed', 'Please enable notifications in your device settings to receive alerts.');
+                    return;
+                  }
+                }
+                setNotificationPref('analysis', val);
+              }}
+              trackColor={{ false: c.border, true: c.gold }}
+              thumbColor="#fff"
+            />
+          </View>
+          <View style={[styles.divider, { backgroundColor: c.border }]} />
+          <View style={styles.settingsRow}>
+            <View style={styles.settingsRowLeft}>
+              <Ionicons name="chatbubble-outline" size={20} color={c.textSecondary} />
+              <View>
+                <Text style={[styles.settingsLabel, { color: c.text }]}>Chat Messages</Text>
+                <Text style={[styles.settingsValue, { color: c.textMuted }]}>New chat notifications</Text>
+              </View>
+            </View>
+            <Switch
+              value={notificationPrefs.chat}
+              onValueChange={async (val) => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                if (val) {
+                  const { status } = await Notifications.requestPermissionsAsync();
+                  if (status !== 'granted') {
+                    Alert.alert('Permission Needed', 'Please enable notifications in your device settings to receive alerts.');
+                    return;
+                  }
+                }
+                setNotificationPref('chat', val);
+              }}
+              trackColor={{ false: c.border, true: c.gold }}
+              thumbColor="#fff"
+            />
+          </View>
         </View>
 
         <Text style={[styles.sectionLabel, { color: c.textMuted }]}>ADMIN</Text>
