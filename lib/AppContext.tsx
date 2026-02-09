@@ -8,6 +8,7 @@ import {
   setSubscriptionUrl as storeSubscriptionUrl,
   getHasSeenWelcome,
   setHasSeenWelcome as storeHasSeenWelcome,
+  resetHasSeenWelcome as storeResetHasSeenWelcome,
   getModerators,
   addModerator as storeAddModerator,
   removeModerator as storeRemoveModerator,
@@ -28,6 +29,7 @@ interface AppContextValue {
   setUserNameValue: (name: string) => Promise<void>;
   setSubscriptionUrlValue: (url: string) => Promise<void>;
   completeWelcome: () => void;
+  showWelcomeAgain: () => void;
   addModeratorByName: (username: string) => Promise<void>;
   removeModeratorById: (id: string) => Promise<void>;
   refreshModerators: () => Promise<void>;
@@ -94,6 +96,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
     storeHasSeenWelcome();
   }
 
+  function showWelcomeAgain() {
+    setHasSeenWelcome(false);
+    storeResetHasSeenWelcome();
+  }
+
   function loginAdmin(password: string): boolean {
     if (password === ADMIN_PASSWORD) {
       setIsAdmin(true);
@@ -131,6 +138,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setUserNameValue,
     setSubscriptionUrlValue,
     completeWelcome,
+    showWelcomeAgain,
     addModeratorByName,
     removeModeratorById,
     refreshModerators,

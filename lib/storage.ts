@@ -215,3 +215,7 @@ export async function getHasSeenWelcome(): Promise<boolean> {
 export async function setHasSeenWelcome(): Promise<void> {
   await AsyncStorage.setItem(KEYS.HAS_SEEN_WELCOME, 'true');
 }
+
+export async function resetHasSeenWelcome(): Promise<void> {
+  await AsyncStorage.removeItem(KEYS.HAS_SEEN_WELCOME);
+}
