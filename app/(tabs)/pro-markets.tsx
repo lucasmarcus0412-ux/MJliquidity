@@ -25,6 +25,7 @@ import {
   deleteAnalysisPost,
   getChatMessages,
   addChatMessage,
+  deleteChatMessage,
 } from '@/lib/storage';
 import { useFocusEffect } from 'expo-router';
 
@@ -57,7 +58,7 @@ function formatChatTime(ts: number): string {
 export default function ProMarketsScreen() {
   const c = Colors.dark;
   const insets = useSafeAreaInsets();
-  const { isAdmin, userName, setUserNameValue } = useApp();
+  const { isAdmin, isModerator, userName, setUserNameValue } = useApp();
   const [activeTab, setActiveTab] = useState<ActiveTab>('analysis');
   const [posts, setPosts] = useState<AnalysisPost[]>([]);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -122,11 +123,22 @@ export default function ProMarketsScreen() {
     if (!inputText.trim()) return;
     const displayName = isAdmin ? 'MJliquidity' : userName;
     if (!displayName) { setShowNamePrompt(true); return; }
-    await addChatMessage({ username: displayName, text: inputText.trim(), isAdmin }, 'four_markets');
+    await addChatMessage({ username: displayName, text: inputText.trim(), isAdmin, isModerator: !isAdmin && isModerator }, 'four_markets');
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     setInputText('');
     await loadMessages();
     setTimeout(() => flatListRef.current?.scrollToEnd({ animated: true }), 100);
+  };
+
+  const handleDeleteMessage = (id: string) => {
+    Alert.alert('Delete Message', 'Remove this message?', [
+      { text: 'Cancel', style: 'cancel' },
+      { text: 'Delete', style: 'destructive', onPress: async () => {
+        await deleteChatMessage(id, 'four_markets');
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        await loadMessages();
+      }},
+    ]);
   };
 
   const getMarketLabel = (cat: string) => {
@@ -230,7 +242,7 @@ export default function ProMarketsScreen() {
             data={messages}
             keyExtractor={(item) => item.id}
             renderItem={({ item }) => (
-              <View style={[styles.messageBubble, item.isAdmin && styles.adminMessageStyle]}>
+              <View style={[styles.messageBubble, item.isAdmin && styles.adminMessageStyle, item.isModerator && styles.modMessageStyle]}>
                 <View style={styles.messageHeader}>
                   <View style={styles.nameRow}>
                     {item.isAdmin && (
@@ -238,11 +250,26 @@ export default function ProMarketsScreen() {
                         <Ionicons name="shield-checkmark" size={10} color={c.gold} />
                       </View>
                     )}
-                    <Text style={[styles.messageName, { color: item.isAdmin ? c.gold : c.textSecondary }]}>
+                    {item.isModerator && !item.isAdmin && (
+                      <View style={[styles.adminTag, { backgroundColor: 'rgba(76, 175, 80, 0.15)' }]}>
+                        <Ionicons name="shield-half-outline" size={10} color="#4CAF50" />
+                      </View>
+                    )}
+                    <Text style={[styles.messageName, { color: item.isAdmin ? c.gold : item.isModerator ? '#4CAF50' : c.textSecondary }]}>
                       {item.username}
                     </Text>
+                    {item.isModerator && !item.isAdmin && (
+                      <Text style={styles.modLabel}>MOD</Text>
+                    )}
                   </View>
-                  <Text style={[styles.messageTime, { color: c.textMuted }]}>{formatChatTime(item.timestamp)}</Text>
+                  <View style={styles.messageHeaderRight}>
+                    <Text style={[styles.messageTime, { color: c.textMuted }]}>{formatChatTime(item.timestamp)}</Text>
+                    {(isAdmin || isModerator) && (
+                      <Pressable onPress={() => handleDeleteMessage(item.id)} hitSlop={8}>
+                        <Ionicons name="trash-outline" size={14} color={c.textMuted} />
+                      </Pressable>
+                    )}
+                  </View>
                 </View>
                 <Text style={[styles.messageText, { color: c.text }]}>{item.text}</Text>
               </View>
@@ -396,8 +423,11 @@ const styles = StyleSheet.create({
   emptyText: { fontSize: 14, fontFamily: 'DMSans_400Regular', textAlign: 'center', paddingHorizontal: 40 },
   messageBubble: { marginBottom: 8, paddingHorizontal: 14, paddingVertical: 10, borderRadius: 16, backgroundColor: '#1A1A1A', marginHorizontal: 16 },
   adminMessageStyle: { backgroundColor: 'rgba(201, 168, 76, 0.08)', borderWidth: 1, borderColor: 'rgba(201, 168, 76, 0.15)' },
+  modMessageStyle: { backgroundColor: 'rgba(76, 175, 80, 0.06)', borderWidth: 1, borderColor: 'rgba(76, 175, 80, 0.12)' },
   messageHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 },
+  messageHeaderRight: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   nameRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  modLabel: { fontSize: 9, fontFamily: 'DMSans_700Bold', color: '#4CAF50', letterSpacing: 1, marginLeft: 4 },
   adminTag: { width: 18, height: 18, borderRadius: 9, alignItems: 'center', justifyContent: 'center' },
   messageName: { fontSize: 13, fontFamily: 'DMSans_600SemiBold' },
   messageTime: { fontSize: 11, fontFamily: 'DMSans_400Regular' },

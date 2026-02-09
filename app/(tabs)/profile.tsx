@@ -68,7 +68,7 @@ function formatTime(ts: number): string {
 export default function ProfileScreen() {
   const c = Colors.dark;
   const insets = useSafeAreaInsets();
-  const { isAdmin, userName, subscriptionUrl, loginAdmin, logoutAdmin, setUserNameValue } = useApp();
+  const { isAdmin, isModerator, userName, subscriptionUrl, loginAdmin, logoutAdmin, setUserNameValue, moderators, addModeratorByName, removeModeratorById } = useApp();
 
   const [activeSection, setActiveSection] = useState<ActiveSection>('main');
   const [showLogin, setShowLogin] = useState(false);
@@ -82,6 +82,8 @@ export default function ProfileScreen() {
   const [eduContent, setEduContent] = useState('');
   const [showDisclaimer, setShowDisclaimer] = useState(false);
   const [showGuidelines, setShowGuidelines] = useState(false);
+  const [showModManager, setShowModManager] = useState(false);
+  const [modNameInput, setModNameInput] = useState('');
 
   const loadEducation = useCallback(async () => {
     const data = await getEducationPosts();
@@ -273,6 +275,12 @@ export default function ProfileScreen() {
               <Text style={[styles.adminIndicatorText, { color: c.gold }]}>Admin</Text>
             </View>
           )}
+          {!isAdmin && isModerator && (
+            <View style={[styles.adminIndicator, { backgroundColor: 'rgba(76, 175, 80, 0.15)' }]}>
+              <Ionicons name="shield-half-outline" size={12} color="#4CAF50" />
+              <Text style={[styles.adminIndicatorText, { color: '#4CAF50' }]}>Moderator</Text>
+            </View>
+          )}
         </View>
 
         <Text style={[styles.sectionLabel, { color: c.textMuted }]}>SUBSCRIPTIONS</Text>
@@ -355,6 +363,17 @@ export default function ProfileScreen() {
                 </View>
               </View>
               <View style={[styles.divider, { backgroundColor: c.border }]} />
+              <Pressable onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setShowModManager(true); }} style={styles.settingsRow}>
+                <View style={styles.settingsRowLeft}>
+                  <Ionicons name="people-outline" size={20} color={c.textSecondary} />
+                  <View>
+                    <Text style={[styles.settingsLabel, { color: c.text }]}>Manage Moderators</Text>
+                    <Text style={[styles.settingsValue, { color: c.textMuted }]}>{moderators.length} active</Text>
+                  </View>
+                </View>
+                <Ionicons name="chevron-forward" size={18} color={c.textMuted} />
+              </Pressable>
+              <View style={[styles.divider, { backgroundColor: c.border }]} />
               <Pressable onPress={handleLogout} style={styles.settingsRow}>
                 <View style={styles.settingsRowLeft}>
                   <Ionicons name="log-out-outline" size={20} color={c.error} />
@@ -432,6 +451,88 @@ export default function ProfileScreen() {
           </View>
         </View>
       </ScrollView>
+
+      <Modal visible={showModManager} animationType="slide" transparent>
+        <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+          <View style={styles.modalOverlay}>
+            <View style={[styles.composeModal, { backgroundColor: c.surface }]}>
+              <View style={styles.composeHeader}>
+                <Pressable onPress={() => { setShowModManager(false); setModNameInput(''); }} hitSlop={12}>
+                  <Ionicons name="close" size={24} color={c.textSecondary} />
+                </Pressable>
+                <Text style={[styles.composeTitle, { color: c.text }]}>Manage Moderators</Text>
+                <View style={{ width: 44 }} />
+              </View>
+
+              <Text style={[styles.modSectionTitle, { color: c.textMuted }]}>ADD MODERATOR</Text>
+              <View style={styles.modAddRow}>
+                <TextInput
+                  placeholder="Enter display name"
+                  placeholderTextColor={c.textMuted}
+                  style={[styles.nameInput, { color: c.text, backgroundColor: c.inputBackground, borderColor: c.inputBorder, flex: 1 }]}
+                  value={modNameInput}
+                  onChangeText={setModNameInput}
+                />
+                <Pressable
+                  onPress={async () => {
+                    if (!modNameInput.trim()) { Alert.alert('Missing Name', 'Please enter a display name.'); return; }
+                    await addModeratorByName(modNameInput.trim());
+                    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+                    setModNameInput('');
+                  }}
+                  style={[styles.saveBtn, { backgroundColor: c.gold }]}
+                >
+                  <Ionicons name="add" size={20} color="#0A0A0A" />
+                </Pressable>
+              </View>
+
+              <Text style={[styles.modSectionTitle, { color: c.textMuted, marginTop: 20 }]}>ACTIVE MODERATORS</Text>
+              <ScrollView style={styles.modList} showsVerticalScrollIndicator={false}>
+                {moderators.length === 0 ? (
+                  <Text style={[styles.modEmptyText, { color: c.textMuted }]}>No moderators assigned yet</Text>
+                ) : (
+                  moderators.map((mod) => (
+                    <View key={mod.id} style={[styles.modRow, { borderBottomColor: c.border }]}>
+                      <View style={styles.modRowLeft}>
+                        <View style={[styles.modAvatar, { backgroundColor: 'rgba(76, 175, 80, 0.15)' }]}>
+                          <Ionicons name="shield-half-outline" size={14} color="#4CAF50" />
+                        </View>
+                        <View>
+                          <Text style={[styles.settingsLabel, { color: c.text }]}>{mod.username}</Text>
+                          <Text style={[styles.settingsValue, { color: c.textMuted }]}>
+                            Added {new Date(mod.addedAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}
+                          </Text>
+                        </View>
+                      </View>
+                      <Pressable
+                        onPress={() => {
+                          Alert.alert('Remove Moderator', `Remove ${mod.username} as moderator?`, [
+                            { text: 'Cancel', style: 'cancel' },
+                            { text: 'Remove', style: 'destructive', onPress: async () => {
+                              await removeModeratorById(mod.id);
+                              Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+                            }},
+                          ]);
+                        }}
+                        hitSlop={12}
+                      >
+                        <Ionicons name="trash-outline" size={18} color={c.error} />
+                      </Pressable>
+                    </View>
+                  ))
+                )}
+              </ScrollView>
+
+              <View style={[styles.modInfoBox, { backgroundColor: c.goldMuted }]}>
+                <Ionicons name="information-circle-outline" size={16} color={c.gold} />
+                <Text style={[styles.modInfoText, { color: c.goldLight }]}>
+                  Moderators can delete chat messages but cannot post analysis.
+                </Text>
+              </View>
+            </View>
+          </View>
+        </KeyboardAvoidingView>
+      </Modal>
 
       <Modal visible={showDisclaimer} animationType="slide" transparent>
         <View style={styles.modalOverlay}>
@@ -556,4 +657,13 @@ const styles = StyleSheet.create({
   guidelineRow: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 10 },
   guidelineDot: { width: 6, height: 6, borderRadius: 3 },
   guidelineText: { fontSize: 15, fontFamily: 'DMSans_400Regular', flex: 1 },
+  modSectionTitle: { fontSize: 12, fontFamily: 'DMSans_600SemiBold', letterSpacing: 1, marginBottom: 10 },
+  modAddRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  modList: { flex: 1, marginBottom: 12 },
+  modEmptyText: { fontSize: 14, fontFamily: 'DMSans_400Regular', paddingVertical: 20, textAlign: 'center' },
+  modRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 12, borderBottomWidth: 1 },
+  modRowLeft: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  modAvatar: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center' },
+  modInfoBox: { flexDirection: 'row', alignItems: 'center', gap: 8, padding: 12, borderRadius: 10 },
+  modInfoText: { fontSize: 13, fontFamily: 'DMSans_400Regular', flex: 1 },
 });
