@@ -6,6 +6,8 @@ import {
   setUserName as storeUserName,
   getSubscriptionUrl,
   setSubscriptionUrl as storeSubscriptionUrl,
+  getHasSeenWelcome,
+  setHasSeenWelcome as storeHasSeenWelcome,
 } from './storage';
 
 interface AppContextValue {
@@ -13,10 +15,12 @@ interface AppContextValue {
   userName: string;
   subscriptionUrl: string;
   isLoading: boolean;
+  hasSeenWelcome: boolean;
   loginAdmin: (password: string) => boolean;
   logoutAdmin: () => void;
   setUserNameValue: (name: string) => Promise<void>;
   setSubscriptionUrlValue: (url: string) => Promise<void>;
+  completeWelcome: () => void;
 }
 
 const AppContext = createContext<AppContextValue | null>(null);
@@ -28,21 +32,29 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [userName, setUserName] = useState('');
   const [subscriptionUrl, setSubscriptionUrl] = useState('');
   const [isLoading, setIsLoading] = useState(true);
+  const [hasSeenWelcome, setHasSeenWelcome] = useState(true);
 
   useEffect(() => {
     loadState();
   }, []);
 
   async function loadState() {
-    const [admin, name, subUrl] = await Promise.all([
+    const [admin, name, subUrl, seenWelcome] = await Promise.all([
       getAdminStatus(),
       getUserName(),
       getSubscriptionUrl(),
+      getHasSeenWelcome(),
     ]);
     setIsAdmin(admin);
     setUserName(name || '');
     setSubscriptionUrl(subUrl);
+    setHasSeenWelcome(seenWelcome);
     setIsLoading(false);
+  }
+
+  function completeWelcome() {
+    setHasSeenWelcome(true);
+    storeHasSeenWelcome();
   }
 
   function loginAdmin(password: string): boolean {
@@ -74,11 +86,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
     userName,
     subscriptionUrl,
     isLoading,
+    hasSeenWelcome,
     loginAdmin,
     logoutAdmin,
     setUserNameValue,
     setSubscriptionUrlValue,
-  }), [isAdmin, userName, subscriptionUrl, isLoading]);
+    completeWelcome,
+  }), [isAdmin, userName, subscriptionUrl, isLoading, hasSeenWelcome]);
 
   return (
     <AppContext.Provider value={value}>

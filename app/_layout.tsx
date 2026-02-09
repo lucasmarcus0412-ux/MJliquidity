@@ -7,7 +7,7 @@ import { KeyboardProvider } from "react-native-keyboard-controller";
 import { StatusBar } from "expo-status-bar";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { queryClient } from "@/lib/query-client";
-import { AppProvider } from "@/lib/AppContext";
+import { AppProvider, useApp } from "@/lib/AppContext";
 import {
   useFonts,
   DMSans_400Regular,
@@ -19,9 +19,17 @@ import {
 SplashScreen.preventAutoHideAsync();
 
 function RootLayoutNav() {
+  const { hasSeenWelcome, isLoading } = useApp();
+
+  if (isLoading) return null;
+
   return (
     <Stack screenOptions={{ headerBackTitle: "Back", headerShown: false }}>
-      <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+      {!hasSeenWelcome ? (
+        <Stack.Screen name="welcome" options={{ headerShown: false, animation: 'fade' }} />
+      ) : (
+        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+      )}
     </Stack>
   );
 }

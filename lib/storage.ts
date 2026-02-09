@@ -6,6 +6,7 @@ const KEYS = {
   CHAT_MESSAGES: 'mjl_chat_messages',
   USER_NAME: 'mjl_user_name',
   SUBSCRIPTION_URL: 'mjl_subscription_url',
+  HAS_SEEN_WELCOME: 'mjl_has_seen_welcome',
 };
 
 export interface AnalysisPost {
@@ -96,4 +97,13 @@ export async function getSubscriptionUrl(): Promise<string> {
 
 export async function setSubscriptionUrl(url: string): Promise<void> {
   await AsyncStorage.setItem(KEYS.SUBSCRIPTION_URL, url);
+}
+
+export async function getHasSeenWelcome(): Promise<boolean> {
+  const val = await AsyncStorage.getItem(KEYS.HAS_SEEN_WELCOME);
+  return val === 'true';
+}
+
+export async function setHasSeenWelcome(): Promise<void> {
+  await AsyncStorage.setItem(KEYS.HAS_SEEN_WELCOME, 'true');
 }
