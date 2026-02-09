@@ -14,6 +14,12 @@ import {
   removeModerator as storeRemoveModerator,
   isUserModerator,
   Moderator,
+  SubscriptionTier,
+  getSubscriptionTier,
+  setSubscriptionTier as storeSubscriptionTier,
+  hasGoldAccess,
+  hasProAccess,
+  hasAnySubscription,
 } from './storage';
 
 interface AppContextValue {
@@ -24,6 +30,10 @@ interface AppContextValue {
   isLoading: boolean;
   hasSeenWelcome: boolean;
   moderators: Moderator[];
+  subscriptionTier: SubscriptionTier;
+  canAccessGold: boolean;
+  canAccessPro: boolean;
+  isSubscribed: boolean;
   loginAdmin: (password: string) => boolean;
   logoutAdmin: () => void;
   setUserNameValue: (name: string) => Promise<void>;
@@ -47,6 +57,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
   const [hasSeenWelcome, setHasSeenWelcome] = useState(true);
   const [moderators, setModerators] = useState<Moderator[]>([]);
+  const [subscriptionTier, setSubscriptionTierState] = useState<SubscriptionTier>('none');
 
   useEffect(() => {
     loadState();
@@ -61,18 +72,20 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, [userName, moderators]);
 
   async function loadState() {
-    const [admin, name, subUrl, seenWelcome, mods] = await Promise.all([
+    const [admin, name, subUrl, seenWelcome, mods, subTier] = await Promise.all([
       getAdminStatus(),
       getUserName(),
       getSubscriptionUrl(),
       getHasSeenWelcome(),
       getModerators(),
+      getSubscriptionTier(),
     ]);
     setIsAdmin(admin);
     setUserName(name || '');
     setSubscriptionUrl(subUrl);
     setHasSeenWelcome(seenWelcome);
     setModerators(mods);
+    setSubscriptionTierState(subTier);
     setIsLoading(false);
   }
 
@@ -125,6 +138,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
     await storeSubscriptionUrl(url);
   }
 
+  const canAccessGold = isAdmin || hasGoldAccess(subscriptionTier);
+  const canAccessPro = isAdmin || hasProAccess(subscriptionTier);
+  const isSubscribed = isAdmin || hasAnySubscription(subscriptionTier);
+
   const value = useMemo(() => ({
     isAdmin,
     isModerator,
@@ -133,6 +150,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
     isLoading,
     hasSeenWelcome,
     moderators,
+    subscriptionTier,
+    canAccessGold,
+    canAccessPro,
+    isSubscribed,
     loginAdmin,
     logoutAdmin,
     setUserNameValue,
@@ -142,7 +163,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     addModeratorByName,
     removeModeratorById,
     refreshModerators,
-  }), [isAdmin, isModerator, userName, subscriptionUrl, isLoading, hasSeenWelcome, moderators]);
+  }), [isAdmin, isModerator, userName, subscriptionUrl, isLoading, hasSeenWelcome, moderators, subscriptionTier, canAccessGold, canAccessPro, isSubscribed]);
 
   return (
     <AppContext.Provider value={value}>

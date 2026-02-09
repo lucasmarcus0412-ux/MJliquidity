@@ -13,10 +13,12 @@ import {
   RefreshControl,
   KeyboardAvoidingView,
   Image,
+  Linking,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons, Feather } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
+import { LinearGradient } from 'expo-linear-gradient';
 import Colors from '@/constants/colors';
 import { useApp } from '@/lib/AppContext';
 import {
@@ -90,7 +92,7 @@ function AnalysisCard({ post, isAdmin, onDelete }: {
 export default function HomeScreen() {
   const c = Colors.dark;
   const insets = useSafeAreaInsets();
-  const { isAdmin } = useApp();
+  const { isAdmin, isSubscribed, subscriptionUrl } = useApp();
   const [posts, setPosts] = useState<AnalysisPost[]>([]);
   const [refreshing, setRefreshing] = useState(false);
   const [showCompose, setShowCompose] = useState(false);
@@ -174,6 +176,36 @@ export default function HomeScreen() {
         contentContainerStyle={[styles.listContent, { paddingBottom: Platform.OS === 'web' ? 84 : 100 }]}
         showsVerticalScrollIndicator={false}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={c.gold} />}
+        ListHeaderComponent={!isSubscribed ? (
+          <Pressable
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+              if (subscriptionUrl) {
+                Linking.openURL(subscriptionUrl).catch(() => {});
+              } else {
+                Alert.alert('Coming Soon', 'Subscription links will be available soon.');
+              }
+            }}
+            style={[styles.vipBanner, { borderColor: c.gold }]}
+          >
+            <LinearGradient
+              colors={['rgba(201, 168, 76, 0.15)', 'rgba(201, 168, 76, 0.05)']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={StyleSheet.absoluteFill}
+            />
+            <View style={styles.vipBannerContent}>
+              <View style={styles.vipBannerLeft}>
+                <Ionicons name="diamond" size={20} color={c.gold} />
+                <View>
+                  <Text style={[styles.vipBannerTitle, { color: c.gold }]}>Unlock VIP Analysis</Text>
+                  <Text style={[styles.vipBannerSub, { color: c.textSecondary }]}>Gold & Pro members get exclusive signals</Text>
+                </View>
+              </View>
+              <Ionicons name="chevron-forward" size={18} color={c.gold} />
+            </View>
+          </Pressable>
+        ) : null}
         ListEmptyComponent={
           <View style={styles.emptyState}>
             <Ionicons name="analytics-outline" size={48} color={c.textMuted} />
@@ -286,4 +318,9 @@ const styles = StyleSheet.create({
   chipText: { fontSize: 12, fontFamily: 'DMSans_500Medium' },
   titleInput: { fontSize: 20, fontFamily: 'DMSans_700Bold', paddingVertical: 12, borderBottomWidth: 1, marginBottom: 12 },
   contentInput: { fontSize: 15, fontFamily: 'DMSans_400Regular', flex: 1, lineHeight: 22 },
+  vipBanner: { borderRadius: 14, borderWidth: 1, overflow: 'hidden' as const, marginBottom: 8 },
+  vipBannerContent: { flexDirection: 'row' as const, alignItems: 'center' as const, justifyContent: 'space-between' as const, padding: 14 },
+  vipBannerLeft: { flexDirection: 'row' as const, alignItems: 'center' as const, gap: 12, flex: 1 },
+  vipBannerTitle: { fontSize: 15, fontFamily: 'DMSans_700Bold' },
+  vipBannerSub: { fontSize: 12, fontFamily: 'DMSans_400Regular', marginTop: 2 },
 });

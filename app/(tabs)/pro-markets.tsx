@@ -12,11 +12,13 @@ import {
   RefreshControl,
   KeyboardAvoidingView,
   Image,
+  Linking,
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
+import { LinearGradient } from 'expo-linear-gradient';
 import Colors from '@/constants/colors';
 import { useApp } from '@/lib/AppContext';
 import {
@@ -60,7 +62,7 @@ function formatChatTime(ts: number): string {
 export default function ProMarketsScreen() {
   const c = Colors.dark;
   const insets = useSafeAreaInsets();
-  const { isAdmin, isModerator, userName, setUserNameValue } = useApp();
+  const { isAdmin, isModerator, userName, setUserNameValue, canAccessPro, subscriptionUrl } = useApp();
   const [activeTab, setActiveTab] = useState<ActiveTab>('analysis');
   const [posts, setPosts] = useState<AnalysisPost[]>([]);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -159,6 +161,53 @@ export default function ProMarketsScreen() {
   };
 
   const webTopInset = Platform.OS === 'web' ? 67 : 0;
+
+  const handleSubscribe = () => {
+    if (subscriptionUrl) {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+      Linking.openURL(subscriptionUrl).catch(() => Alert.alert('Error', 'Could not open link.'));
+    } else {
+      Alert.alert('Coming Soon', 'Subscription links will be available soon.');
+    }
+  };
+
+  if (!canAccessPro) {
+    return (
+      <View style={[styles.container, { backgroundColor: c.background }]}>
+        <View style={[styles.header, { paddingTop: insets.top + 12 + webTopInset }]}>
+          <View>
+            <View style={styles.titleRow}>
+              <Ionicons name="bar-chart" size={20} color={c.gold} />
+              <Text style={[styles.headerTitle, { color: c.gold }]}>Pro Markets</Text>
+            </View>
+            <Text style={[styles.headerSubtitle, { color: c.textMuted }]}>NQ  |  ES  |  BTC  |  XAU</Text>
+          </View>
+        </View>
+        <View style={styles.paywallContainer}>
+          <LinearGradient colors={['rgba(201, 168, 76, 0.12)', 'rgba(201, 168, 76, 0.03)', 'transparent']} style={styles.paywallGlow} />
+          <View style={[styles.paywallIconCircle, { backgroundColor: c.goldMuted }]}>
+            <Ionicons name="lock-closed" size={32} color={c.gold} />
+          </View>
+          <Text style={[styles.paywallTitle, { color: c.text }]}>Pro Markets Access</Text>
+          <Text style={[styles.paywallSubtitle, { color: c.textSecondary }]}>
+            Unlock multi-asset analysis and members-only chat
+          </Text>
+          <View style={styles.paywallFeatures}>
+            {['NQ, ES, BTC, XAU analysis', 'Consolidated market analysis', 'Members-only Pro chat'].map((f, i) => (
+              <View key={i} style={styles.paywallFeatureRow}>
+                <Ionicons name="checkmark-circle" size={18} color={c.gold} />
+                <Text style={[styles.paywallFeatureText, { color: c.textSecondary }]}>{f}</Text>
+              </View>
+            ))}
+          </View>
+          <Pressable onPress={handleSubscribe} style={[styles.paywallBtn, { backgroundColor: c.gold }]}>
+            <Text style={styles.paywallBtnText}>Subscribe Now</Text>
+          </Pressable>
+          <Text style={[styles.paywallPrice, { color: c.textMuted }]}>From £75/month</Text>
+        </View>
+      </View>
+    );
+  }
 
   return (
     <KeyboardAvoidingView
@@ -488,4 +537,15 @@ const styles = StyleSheet.create({
   contentInput: { fontSize: 15, fontFamily: 'DMSans_400Regular', flex: 1, lineHeight: 22 },
   guidelinesBanner: { flexDirection: 'row', alignItems: 'center', gap: 8, marginHorizontal: 16, marginBottom: 8, paddingHorizontal: 12, paddingVertical: 8, borderRadius: 10, borderWidth: 1 },
   guidelinesText: { fontSize: 12, fontFamily: 'DMSans_400Regular', flex: 1 },
+  paywallContainer: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 32, marginTop: -40 },
+  paywallGlow: { position: 'absolute' as const, top: 0, left: 0, right: 0, height: 200, borderRadius: 0 },
+  paywallIconCircle: { width: 72, height: 72, borderRadius: 36, alignItems: 'center' as const, justifyContent: 'center' as const, marginBottom: 20 },
+  paywallTitle: { fontSize: 24, fontFamily: 'DMSans_700Bold', marginBottom: 8 },
+  paywallSubtitle: { fontSize: 15, fontFamily: 'DMSans_400Regular', textAlign: 'center' as const, lineHeight: 22, marginBottom: 24, paddingHorizontal: 16 },
+  paywallFeatures: { alignSelf: 'stretch' as const, gap: 12, marginBottom: 28 },
+  paywallFeatureRow: { flexDirection: 'row' as const, alignItems: 'center' as const, gap: 10 },
+  paywallFeatureText: { fontSize: 14, fontFamily: 'DMSans_400Regular', flex: 1 },
+  paywallBtn: { paddingHorizontal: 40, paddingVertical: 14, borderRadius: 24, marginBottom: 8 },
+  paywallBtnText: { fontSize: 16, fontFamily: 'DMSans_700Bold', color: '#0A0A0A' },
+  paywallPrice: { fontSize: 13, fontFamily: 'DMSans_400Regular' },
 });

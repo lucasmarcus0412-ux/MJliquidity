@@ -68,7 +68,7 @@ function formatTime(ts: number): string {
 export default function ProfileScreen() {
   const c = Colors.dark;
   const insets = useSafeAreaInsets();
-  const { isAdmin, isModerator, userName, subscriptionUrl, loginAdmin, logoutAdmin, setUserNameValue, moderators, addModeratorByName, removeModeratorById } = useApp();
+  const { isAdmin, isModerator, userName, subscriptionUrl, loginAdmin, logoutAdmin, setUserNameValue, moderators, addModeratorByName, removeModeratorById, isSubscribed } = useApp();
 
   const [activeSection, setActiveSection] = useState<ActiveSection>('main');
   const [showLogin, setShowLogin] = useState(false);
@@ -305,15 +305,33 @@ export default function ProfileScreen() {
 
         <Text style={[styles.sectionLabel, { color: c.textMuted }]}>LEARN</Text>
         <View style={[styles.sectionCard, { backgroundColor: c.card, borderColor: c.cardBorder }]}>
-          <Pressable onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setActiveSection('education'); }} style={styles.settingsRow}>
+          <Pressable
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              if (isSubscribed) {
+                setActiveSection('education');
+              } else {
+                handleSubscribe();
+              }
+            }}
+            style={styles.settingsRow}
+          >
             <View style={styles.settingsRowLeft}>
-              <Ionicons name="book-outline" size={20} color={c.textSecondary} />
+              <Ionicons name={isSubscribed ? 'book-outline' : 'lock-closed-outline'} size={20} color={isSubscribed ? c.textSecondary : c.gold} />
               <View>
                 <Text style={[styles.settingsLabel, { color: c.text }]}>Education</Text>
-                <Text style={[styles.settingsValue, { color: c.textMuted }]}>Trading knowledge & strategies</Text>
+                <Text style={[styles.settingsValue, { color: c.textMuted }]}>
+                  {isSubscribed ? 'Trading knowledge & strategies' : 'Subscribe to unlock'}
+                </Text>
               </View>
             </View>
-            <Ionicons name="chevron-forward" size={18} color={c.textMuted} />
+            {isSubscribed ? (
+              <Ionicons name="chevron-forward" size={18} color={c.textMuted} />
+            ) : (
+              <View style={[styles.lockBadge, { backgroundColor: c.goldMuted }]}>
+                <Text style={[styles.lockBadgeText, { color: c.gold }]}>VIP</Text>
+              </View>
+            )}
           </Pressable>
         </View>
 
@@ -800,4 +818,6 @@ const styles = StyleSheet.create({
   modInfoText: { fontSize: 13, fontFamily: 'DMSans_400Regular', flex: 1 },
   privacySectionTitle: { fontSize: 16, fontFamily: 'DMSans_700Bold', marginTop: 20, marginBottom: 8 },
   privacyFooter: { marginTop: 24, paddingTop: 16, borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.06)', alignItems: 'center' },
+  lockBadge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8 },
+  lockBadgeText: { fontSize: 11, fontFamily: 'DMSans_700Bold', letterSpacing: 1 },
 });

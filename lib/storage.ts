@@ -13,7 +13,10 @@ const KEYS = {
   FOUR_MARKETS_CHAT: 'mjl_four_markets_chat',
   EDUCATION_POSTS: 'mjl_education_posts',
   MODERATORS: 'mjl_moderators',
+  SUBSCRIPTION_TIER: 'mjl_subscription_tier',
 };
+
+export type SubscriptionTier = 'none' | 'gold_vip' | 'pro' | 'all_access';
 
 export type FeedChannel = 'free' | 'gold_vip' | 'four_markets';
 export type ChatChannel = 'gold_vip' | 'four_markets';
@@ -218,4 +221,25 @@ export async function setHasSeenWelcome(): Promise<void> {
 
 export async function resetHasSeenWelcome(): Promise<void> {
   await AsyncStorage.removeItem(KEYS.HAS_SEEN_WELCOME);
+}
+
+export async function getSubscriptionTier(): Promise<SubscriptionTier> {
+  const tier = await AsyncStorage.getItem(KEYS.SUBSCRIPTION_TIER);
+  return (tier as SubscriptionTier) || 'none';
+}
+
+export async function setSubscriptionTier(tier: SubscriptionTier): Promise<void> {
+  await AsyncStorage.setItem(KEYS.SUBSCRIPTION_TIER, tier);
+}
+
+export function hasGoldAccess(tier: SubscriptionTier): boolean {
+  return tier === 'gold_vip' || tier === 'all_access';
+}
+
+export function hasProAccess(tier: SubscriptionTier): boolean {
+  return tier === 'pro' || tier === 'all_access';
+}
+
+export function hasAnySubscription(tier: SubscriptionTier): boolean {
+  return tier !== 'none';
 }
