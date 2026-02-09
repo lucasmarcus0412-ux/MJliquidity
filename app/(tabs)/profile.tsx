@@ -82,6 +82,7 @@ export default function ProfileScreen() {
   const [eduContent, setEduContent] = useState('');
   const [showDisclaimer, setShowDisclaimer] = useState(false);
   const [showGuidelines, setShowGuidelines] = useState(false);
+  const [showPrivacyPolicy, setShowPrivacyPolicy] = useState(false);
   const [showModManager, setShowModManager] = useState(false);
   const [modNameInput, setModNameInput] = useState('');
 
@@ -476,6 +477,17 @@ export default function ProfileScreen() {
             <Ionicons name="chevron-forward" size={18} color={c.textMuted} />
           </Pressable>
           <View style={[styles.divider, { backgroundColor: c.border }]} />
+          <Pressable onPress={() => setShowPrivacyPolicy(true)} style={styles.settingsRow}>
+            <View style={styles.settingsRowLeft}>
+              <Ionicons name="lock-closed-outline" size={20} color={c.textSecondary} />
+              <View>
+                <Text style={[styles.settingsLabel, { color: c.text }]}>Privacy Policy</Text>
+                <Text style={[styles.settingsValue, { color: c.textMuted }]}>How we handle your data</Text>
+              </View>
+            </View>
+            <Ionicons name="chevron-forward" size={18} color={c.textMuted} />
+          </Pressable>
+          <View style={[styles.divider, { backgroundColor: c.border }]} />
           <View style={styles.settingsRow}>
             <View style={styles.settingsRowLeft}>
               <Ionicons name="information-circle-outline" size={20} color={c.textSecondary} />
@@ -627,6 +639,90 @@ export default function ProfileScreen() {
           </View>
         </View>
       </Modal>
+
+      <Modal visible={showPrivacyPolicy} animationType="slide" transparent>
+        <View style={styles.modalOverlay}>
+          <View style={[styles.legalModal, { backgroundColor: c.surface }]}>
+            <View style={styles.legalModalHeader}>
+              <Text style={[styles.legalModalTitle, { color: c.gold }]}>Privacy Policy</Text>
+              <Pressable onPress={() => setShowPrivacyPolicy(false)} hitSlop={12}>
+                <Ionicons name="close" size={24} color={c.textSecondary} />
+              </Pressable>
+            </View>
+            <ScrollView showsVerticalScrollIndicator={false} style={styles.legalScroll}>
+              <Text style={[styles.legalText, { color: c.textMuted, marginBottom: 16 }]}>
+                Last updated: February 2026
+              </Text>
+              <Text style={[styles.legalText, { color: c.textSecondary }]}>
+                MJliquidity respects your privacy and is committed to protecting your personal information.
+              </Text>
+
+              <Text style={[styles.privacySectionTitle, { color: c.text }]}>Information We Collect</Text>
+              <Text style={[styles.legalText, { color: c.textSecondary }]}>We may collect:</Text>
+              {[
+                'Account information (email or login details)',
+                'Subscription status',
+                'App usage data (analytics)',
+                'Device information for app performance and security',
+              ].map((item, i) => (
+                <View key={i} style={styles.guidelineRow}>
+                  <View style={[styles.guidelineDot, { backgroundColor: c.gold }]} />
+                  <Text style={[styles.guidelineText, { color: c.textSecondary }]}>{item}</Text>
+                </View>
+              ))}
+              <Text style={[styles.legalText, { color: c.textSecondary, marginTop: 8 }]}>
+                We do not collect or store payment information directly. All payments are processed securely through Apple App Store or Google Play.
+              </Text>
+
+              <Text style={[styles.privacySectionTitle, { color: c.text }]}>How We Use Information</Text>
+              <Text style={[styles.legalText, { color: c.textSecondary }]}>We use information to:</Text>
+              {[
+                'Provide access to app features',
+                'Manage subscriptions',
+                'Improve performance and reliability',
+                'Communicate important updates',
+              ].map((item, i) => (
+                <View key={i} style={styles.guidelineRow}>
+                  <View style={[styles.guidelineDot, { backgroundColor: c.gold }]} />
+                  <Text style={[styles.guidelineText, { color: c.textSecondary }]}>{item}</Text>
+                </View>
+              ))}
+
+              <Text style={[styles.privacySectionTitle, { color: c.text }]}>Third-Party Services</Text>
+              <Text style={[styles.legalText, { color: c.textSecondary }]}>
+                The app may contain links to third-party services such as brokers, prop firms, or copy trading platforms. These services operate independently and have their own privacy policies.
+              </Text>
+              <Text style={[styles.legalText, { color: c.textSecondary, marginTop: 8 }]}>
+                MJliquidity is not responsible for third-party practices.
+              </Text>
+
+              <Text style={[styles.privacySectionTitle, { color: c.text }]}>Data Security</Text>
+              <Text style={[styles.legalText, { color: c.textSecondary }]}>
+                We take reasonable technical and organisational measures to protect your information.
+              </Text>
+
+              <Text style={[styles.privacySectionTitle, { color: c.text }]}>Your Rights</Text>
+              <Text style={[styles.legalText, { color: c.textSecondary }]}>
+                You may request account deletion or data removal at any time by contacting support.
+              </Text>
+
+              <Text style={[styles.privacySectionTitle, { color: c.text }]}>Contact</Text>
+              <Text style={[styles.legalText, { color: c.textSecondary }]}>
+                For privacy questions, contact:
+              </Text>
+              <Text style={[styles.legalText, { color: c.gold, marginTop: 4 }]}>
+                support@mjliquidity.com
+              </Text>
+
+              <View style={styles.privacyFooter}>
+                <Text style={[styles.legalText, { color: c.textMuted, textAlign: 'center' }]}>
+                  MJliquidity{'\u2122'}
+                </Text>
+              </View>
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -702,4 +798,6 @@ const styles = StyleSheet.create({
   modAvatar: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center' },
   modInfoBox: { flexDirection: 'row', alignItems: 'center', gap: 8, padding: 12, borderRadius: 10 },
   modInfoText: { fontSize: 13, fontFamily: 'DMSans_400Regular', flex: 1 },
+  privacySectionTitle: { fontSize: 16, fontFamily: 'DMSans_700Bold', marginTop: 20, marginBottom: 8 },
+  privacyFooter: { marginTop: 24, paddingTop: 16, borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.06)', alignItems: 'center' },
 });

@@ -63,20 +63,21 @@ export default function WelcomeScreen() {
           entering={Platform.OS !== 'web' ? FadeInDown.delay(800).duration(800) : undefined}
           style={styles.bottomSection}
         >
-          <View style={styles.featuresRow}>
-            <View style={styles.featurePill}>
-              <View style={[styles.featureDot, { backgroundColor: c.gold }]} />
-              <Text style={[styles.featureText, { color: c.textSecondary }]}>Market Analysis</Text>
-            </View>
-            <View style={styles.featurePill}>
-              <View style={[styles.featureDot, { backgroundColor: c.gold }]} />
-              <Text style={[styles.featureText, { color: c.textSecondary }]}>Community</Text>
-            </View>
-            <View style={styles.featurePill}>
-              <View style={[styles.featureDot, { backgroundColor: c.gold }]} />
-              <Text style={[styles.featureText, { color: c.textSecondary }]}>VIP Access</Text>
-            </View>
-          </View>
+          <Text style={[styles.tagline, { color: c.textSecondary }]}>
+            Structured market analysis
+          </Text>
+          <Text style={[styles.taglineSub, { color: c.textMuted }]}>
+            Built for traders of all levels
+          </Text>
+
+          <View style={styles.dividerLine} />
+
+          <Text style={[styles.motto, { color: c.textSecondary }]}>
+            Not signals. Not hype.
+          </Text>
+          <Text style={[styles.mottoSub, { color: c.textMuted }]}>
+            Just levels, structure, and discipline.
+          </Text>
 
           <Pressable onPress={handleGetStarted} style={styles.buttonWrapper}>
             <LinearGradient
@@ -88,10 +89,6 @@ export default function WelcomeScreen() {
               <Text style={styles.getStartedText}>Get Started</Text>
             </LinearGradient>
           </Pressable>
-
-          <Text style={[styles.disclaimer, { color: c.textMuted }]}>
-            Free analysis available for everyone
-          </Text>
         </Animated.View>
       </View>
     </View>
@@ -158,32 +155,36 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingBottom: 10,
   },
-  featuresRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'center',
-    gap: 10,
-    marginBottom: 32,
+  tagline: {
+    fontSize: 18,
+    fontFamily: 'DMSans_600SemiBold',
+    textAlign: 'center',
+    letterSpacing: 0.3,
   },
-  featurePill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: 'rgba(201, 168, 76, 0.2)',
-    backgroundColor: 'rgba(201, 168, 76, 0.05)',
+  taglineSub: {
+    fontSize: 14,
+    fontFamily: 'DMSans_400Regular',
+    textAlign: 'center',
+    marginTop: 4,
   },
-  featureDot: {
-    width: 5,
-    height: 5,
-    borderRadius: 2.5,
+  dividerLine: {
+    width: 40,
+    height: 1,
+    backgroundColor: 'rgba(201, 168, 76, 0.3)',
+    marginVertical: 20,
   },
-  featureText: {
-    fontSize: 12,
+  motto: {
+    fontSize: 15,
     fontFamily: 'DMSans_500Medium',
+    textAlign: 'center',
+    fontStyle: 'italic',
+  },
+  mottoSub: {
+    fontSize: 14,
+    fontFamily: 'DMSans_400Regular',
+    textAlign: 'center',
+    marginTop: 4,
+    marginBottom: 32,
   },
   buttonWrapper: {
     width: '100%',
@@ -201,10 +202,5 @@ const styles = StyleSheet.create({
     fontSize: 17,
     fontFamily: 'DMSans_700Bold',
     letterSpacing: 0.5,
-  },
-  disclaimer: {
-    fontSize: 12,
-    fontFamily: 'DMSans_400Regular',
-    textAlign: 'center',
   },
 });
