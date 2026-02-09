@@ -20,6 +20,9 @@ import {
   hasGoldAccess,
   hasProAccess,
   hasAnySubscription,
+  NotificationPreferences,
+  getNotificationPreferences,
+  setNotificationPreference as storeNotificationPreference,
 } from './storage';
 
 interface AppContextValue {
@@ -43,6 +46,8 @@ interface AppContextValue {
   addModeratorByName: (username: string) => Promise<void>;
   removeModeratorById: (id: string) => Promise<void>;
   refreshModerators: () => Promise<void>;
+  notificationPrefs: NotificationPreferences;
+  setNotificationPref: (key: 'analysis' | 'chat', enabled: boolean) => Promise<void>;
 }
 
 const AppContext = createContext<AppContextValue | null>(null);
@@ -58,6 +63,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [hasSeenWelcome, setHasSeenWelcome] = useState(true);
   const [moderators, setModerators] = useState<Moderator[]>([]);
   const [subscriptionTier, setSubscriptionTierState] = useState<SubscriptionTier>('none');
+  const [notificationPrefs, setNotificationPrefs] = useState<NotificationPreferences>({ analysis: false, chat: false });
 
   useEffect(() => {
     loadState();
@@ -72,13 +78,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, [userName, moderators]);
 
   async function loadState() {
-    const [admin, name, subUrl, seenWelcome, mods, subTier] = await Promise.all([
+    const [admin, name, subUrl, seenWelcome, mods, subTier, notifPrefs] = await Promise.all([
       getAdminStatus(),
       getUserName(),
       getSubscriptionUrl(),
       getHasSeenWelcome(),
       getModerators(),
       getSubscriptionTier(),
+      getNotificationPreferences(),
     ]);
     setIsAdmin(admin);
     setUserName(name || '');
@@ -86,6 +93,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setHasSeenWelcome(seenWelcome);
     setModerators(mods);
     setSubscriptionTierState(subTier);
+    setNotificationPrefs(notifPrefs);
     setIsLoading(false);
   }
 
@@ -138,6 +146,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
     await storeSubscriptionUrl(url);
   }
 
+  async function setNotificationPref(key: 'analysis' | 'chat', enabled: boolean) {
+    setNotificationPrefs(prev => ({ ...prev, [key]: enabled }));
+    await storeNotificationPreference(key, enabled);
+  }
+
   const canAccessGold = isAdmin || hasGoldAccess(subscriptionTier);
   const canAccessPro = isAdmin || hasProAccess(subscriptionTier);
   const isSubscribed = isAdmin || hasAnySubscription(subscriptionTier);
@@ -163,7 +176,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
     addModeratorByName,
     removeModeratorById,
     refreshModerators,
-  }), [isAdmin, isModerator, userName, subscriptionUrl, isLoading, hasSeenWelcome, moderators, subscriptionTier, canAccessGold, canAccessPro, isSubscribed]);
+    notificationPrefs,
+    setNotificationPref,
+  }), [isAdmin, isModerator, userName, subscriptionUrl, isLoading, hasSeenWelcome, moderators, subscriptionTier, canAccessGold, canAccessPro, isSubscribed, notificationPrefs]);
 
   return (
     <AppContext.Provider value={value}>
