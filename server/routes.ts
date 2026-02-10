@@ -78,6 +78,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/chat", async (req, res) => {
     try {
       const { username, text, channel, isAdmin, isModerator } = req.body;
+      if (!isAdmin) {
+        const banned = await storage.isUserBanned(username);
+        if (banned) {
+          return res.status(403).json({ error: "You have been banned from chat." });
+        }
+      }
       const msg = await storage.createChatMessage({
         id: generateId(),
         username,
@@ -172,6 +178,53 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (err) {
       console.error("Error removing moderator:", err);
       res.status(500).json({ error: "Failed to remove moderator" });
+    }
+  });
+
+  app.get("/api/banned", async (_req, res) => {
+    try {
+      const banned = await storage.getBannedUsers();
+      res.json(banned);
+    } catch (err) {
+      console.error("Error getting banned users:", err);
+      res.status(500).json({ error: "Failed to fetch banned users" });
+    }
+  });
+
+  app.get("/api/banned/check/:username", async (req, res) => {
+    try {
+      const isBanned = await storage.isUserBanned(req.params.username);
+      res.json({ banned: isBanned });
+    } catch (err) {
+      console.error("Error checking ban status:", err);
+      res.status(500).json({ error: "Failed to check ban status" });
+    }
+  });
+
+  app.post("/api/banned", async (req, res) => {
+    try {
+      const { username, reason, bannedBy } = req.body;
+      const ban = await storage.banUser({
+        id: generateId(),
+        username: username.trim(),
+        reason: reason || null,
+        bannedBy: bannedBy || "Admin",
+        bannedAt: Date.now(),
+      });
+      res.json(ban);
+    } catch (err) {
+      console.error("Error banning user:", err);
+      res.status(500).json({ error: "Failed to ban user" });
+    }
+  });
+
+  app.delete("/api/banned/:id", async (req, res) => {
+    try {
+      await storage.unbanUser(req.params.id);
+      res.json({ success: true });
+    } catch (err) {
+      console.error("Error unbanning user:", err);
+      res.status(500).json({ error: "Failed to unban user" });
     }
   });
 
