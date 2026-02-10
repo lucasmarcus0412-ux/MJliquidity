@@ -25,9 +25,14 @@ const PROP_FIRMS = [
 
 const BROKERS = [
   {
-    name: 'Trusted Broker Partner',
-    description: 'Reliable execution and tight spreads',
-    url: '',
+    name: 'PU Prime',
+    description: 'Copy trading & exclusive promotions',
+    url: 'https://www.puprime.partners/forex-trading-account/?affid=7522195',
+  },
+  {
+    name: 'Vantage',
+    description: 'Award-winning CFD broker',
+    url: 'https://vigco.co/la-com/IqU5ltdv',
   },
 ];
 
