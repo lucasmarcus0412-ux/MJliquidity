@@ -30,7 +30,9 @@ import {
   getChatMessages,
   addChatMessage,
   deleteChatMessage,
+  uploadImage,
 } from '@/lib/storage';
+import { getApiUrl } from '@/lib/query-client';
 import { useFocusEffect } from 'expo-router';
 
 type ActiveTab = 'analysis' | 'chat';
@@ -52,6 +54,16 @@ function formatChatTime(ts: number): string {
   return new Date(ts).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
 }
 
+function resolveImageUrl(uri: string | undefined): string | undefined {
+  if (!uri) return undefined;
+  if (uri.startsWith('http://') || uri.startsWith('https://') || uri.startsWith('data:')) return uri;
+  if (uri.startsWith('/uploads/')) {
+    const base = getApiUrl().replace(/\/$/, '');
+    return `${base}${uri}`;
+  }
+  return uri;
+}
+
 export default function GoldIntradayScreen() {
   const c = Colors.dark;
   const insets = useSafeAreaInsets();
@@ -67,6 +79,8 @@ export default function GoldIntradayScreen() {
   const [showNamePrompt, setShowNamePrompt] = useState(false);
   const [nameInput, setNameInput] = useState('');
   const [imageUri, setImageUri] = useState<string | null>(null);
+  const [imageBase64, setImageBase64] = useState<string | null>(null);
+  const [isPosting, setIsPosting] = useState(false);
   const flatListRef = useRef<FlatList>(null);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -74,6 +88,7 @@ export default function GoldIntradayScreen() {
     const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: 'images', quality: 0.7, base64: true });
     if (!result.canceled && result.assets[0]) {
       setImageUri(result.assets[0].uri);
+      setImageBase64(result.assets[0].base64 || null);
     }
   };
 
@@ -117,10 +132,22 @@ export default function GoldIntradayScreen() {
       Alert.alert('Missing Info', 'Please add a title and content.');
       return;
     }
-    await addAnalysisPost({ title: title.trim(), content: content.trim(), category: 'xauusd', channel: 'gold_vip', imageUri: imageUri || undefined }, 'gold_vip');
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    setTitle(''); setContent(''); setImageUri(null); setShowCompose(false);
-    await loadPosts();
+    setIsPosting(true);
+    try {
+      let finalImageUri = imageUri || undefined;
+      if (imageBase64) {
+        const serverImageUrl = await uploadImage(imageBase64, 'image/jpeg');
+        finalImageUri = serverImageUrl;
+      }
+      await addAnalysisPost({ title: title.trim(), content: content.trim(), category: 'xauusd', channel: 'gold_vip', imageUri: finalImageUri }, 'gold_vip');
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      setTitle(''); setContent(''); setImageUri(null); setImageBase64(null); setShowCompose(false);
+      await loadPosts();
+    } catch (err: any) {
+      Alert.alert('Error', err?.message || 'Failed to create post.');
+    } finally {
+      setIsPosting(false);
+    }
   };
 
   const handleDelete = async (id: string) => {
@@ -300,7 +327,7 @@ export default function GoldIntradayScreen() {
               <Text style={[styles.cardTitle, { color: c.text }]}>{item.title}</Text>
               <Text style={[styles.cardContent, { color: c.textSecondary }]}>{item.content}</Text>
               {item.imageUri && (
-                <Image source={{ uri: item.imageUri }} style={{ width: '100%', height: 200, borderRadius: 12, marginBottom: 12 }} resizeMode="cover" />
+                <Image source={{ uri: resolveImageUrl(item.imageUri) }} style={{ width: '100%', height: 200, borderRadius: 12, marginBottom: 12 }} resizeMode="cover" />
               )}
               <View style={styles.cardFooter}>
                 <View style={styles.adminBadge}>
@@ -440,8 +467,8 @@ export default function GoldIntradayScreen() {
                   <Ionicons name="close" size={24} color={c.textSecondary} />
                 </Pressable>
                 <Text style={[styles.composeTitle, { color: c.text }]}>Gold Analysis</Text>
-                <Pressable onPress={handlePost} style={[styles.postBtn, { backgroundColor: c.gold }]}>
-                  <Text style={[styles.postBtnText, { color: '#0A0A0A' }]}>Post</Text>
+                <Pressable onPress={handlePost} disabled={isPosting} style={[styles.postBtn, { backgroundColor: c.gold, opacity: isPosting ? 0.5 : 1 }]}>
+                  <Text style={[styles.postBtnText, { color: '#0A0A0A' }]}>{isPosting ? 'Posting...' : 'Post'}</Text>
                 </Pressable>
               </View>
               <View style={[styles.categoryBadge, { backgroundColor: c.goldMuted, alignSelf: 'flex-start', marginBottom: 16 }]}>
@@ -456,7 +483,7 @@ export default function GoldIntradayScreen() {
               {imageUri && (
                 <View style={{ marginBottom: 12 }}>
                   <Image source={{ uri: imageUri }} style={{ width: '100%', height: 200, borderRadius: 12 }} resizeMode="cover" />
-                  <Pressable onPress={() => setImageUri(null)} style={{ position: 'absolute', top: 8, right: 8, backgroundColor: 'rgba(0,0,0,0.6)', borderRadius: 12, width: 24, height: 24, alignItems: 'center', justifyContent: 'center' }}>
+                  <Pressable onPress={() => { setImageUri(null); setImageBase64(null); }} style={{ position: 'absolute', top: 8, right: 8, backgroundColor: 'rgba(0,0,0,0.6)', borderRadius: 12, width: 24, height: 24, alignItems: 'center', justifyContent: 'center' }}>
                     <Ionicons name="close" size={16} color="#fff" />
                   </Pressable>
                 </View>

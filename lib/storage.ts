@@ -91,6 +91,15 @@ export async function getAnalysisPosts(channel: FeedChannel = 'free'): Promise<A
   }));
 }
 
+export async function uploadImage(base64Data: string, mimeType: string = 'image/jpeg'): Promise<string> {
+  const res = await apiRequest('POST', '/api/upload', {
+    imageData: base64Data,
+    mimeType,
+  });
+  const data = await res.json();
+  return data.url;
+}
+
 export async function addAnalysisPost(post: Omit<AnalysisPost, 'id' | 'timestamp'>, channel: FeedChannel = 'free'): Promise<AnalysisPost> {
   const res = await apiRequest('POST', '/api/posts', {
     title: post.title,

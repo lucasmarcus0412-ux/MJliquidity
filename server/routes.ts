@@ -1,6 +1,8 @@
 import type { Express } from "express";
 import { createServer, type Server } from "node:http";
 import { storage } from "./storage";
+import * as fs from "fs";
+import * as path from "path";
 
 function generateId(): string {
   return Date.now().toString() + Math.random().toString(36).substr(2, 9);
@@ -170,6 +172,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (err) {
       console.error("Error removing moderator:", err);
       res.status(500).json({ error: "Failed to remove moderator" });
+    }
+  });
+
+  app.post("/api/upload", async (req, res) => {
+    try {
+      const { imageData, mimeType } = req.body;
+      if (!imageData) {
+        return res.status(400).json({ error: "No image data provided" });
+      }
+
+      const uploadsDir = path.resolve(process.cwd(), "uploads");
+      if (!fs.existsSync(uploadsDir)) {
+        fs.mkdirSync(uploadsDir, { recursive: true });
+      }
+
+      const ext = (mimeType || "image/jpeg").split("/")[1] || "jpg";
+      const filename = `${generateId()}.${ext}`;
+      const filePath = path.join(uploadsDir, filename);
+
+      const base64Data = imageData.replace(/^data:image\/\w+;base64,/, "");
+      fs.writeFileSync(filePath, Buffer.from(base64Data, "base64"));
+
+      const imageUrl = `/uploads/${filename}`;
+      res.json({ url: imageUrl });
+    } catch (err) {
+      console.error("Error uploading image:", err);
+      res.status(500).json({ error: "Failed to upload image" });
     }
   });
 

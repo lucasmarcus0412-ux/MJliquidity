@@ -55,13 +55,14 @@ function setupCors(app: express.Application) {
 function setupBodyParsing(app: express.Application) {
   app.use(
     express.json({
+      limit: "10mb",
       verify: (req, _res, buf) => {
         req.rawBody = buf;
       },
     }),
   );
 
-  app.use(express.urlencoded({ extended: false }));
+  app.use(express.urlencoded({ extended: false, limit: "10mb" }));
 }
 
 function setupRequestLogging(app: express.Application) {
@@ -235,6 +236,7 @@ function configureExpoManifestAndStatic(app: express.Application) {
     app.use(express.static(distDir, { maxAge: 0, etag: false }));
   }
   app.use("/assets", express.static(path.resolve(process.cwd(), "assets"), { maxAge: 0, etag: false }));
+  app.use("/uploads", express.static(path.resolve(process.cwd(), "uploads"), { maxAge: "7d" }));
   app.use(express.static(path.resolve(process.cwd(), "static-build"), { maxAge: 0, etag: false }));
 
   log("Expo routing: Checking expo-platform header on / and /manifest");

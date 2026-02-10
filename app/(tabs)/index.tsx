@@ -26,7 +26,9 @@ import {
   getAnalysisPosts,
   addAnalysisPost,
   deleteAnalysisPost,
+  uploadImage,
 } from '@/lib/storage';
+import { getApiUrl } from '@/lib/query-client';
 import { useFocusEffect } from 'expo-router';
 
 const CATEGORIES = ['general', 'forex', 'indices', 'crypto', 'commodities'] as const;
@@ -45,12 +47,23 @@ function formatTime(ts: number): string {
   return new Date(ts).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
 }
 
+function resolveImageUrl(uri: string | undefined): string | undefined {
+  if (!uri) return undefined;
+  if (uri.startsWith('http://') || uri.startsWith('https://') || uri.startsWith('data:')) return uri;
+  if (uri.startsWith('/uploads/')) {
+    const base = getApiUrl().replace(/\/$/, '');
+    return `${base}${uri}`;
+  }
+  return uri;
+}
+
 function AnalysisCard({ post, isAdmin, onDelete }: {
   post: AnalysisPost;
   isAdmin: boolean;
   onDelete: (id: string) => void;
 }) {
   const c = Colors.dark;
+  const resolvedImage = resolveImageUrl(post.imageUri);
   return (
     <View style={[styles.card, { backgroundColor: c.card, borderColor: c.cardBorder }]}>
       <View style={styles.cardHeader}>
@@ -77,8 +90,8 @@ function AnalysisCard({ post, isAdmin, onDelete }: {
       </View>
       <Text style={[styles.cardTitle, { color: c.text }]}>{post.title}</Text>
       <Text style={[styles.cardContent, { color: c.textSecondary }]}>{post.content}</Text>
-      {post.imageUri && (
-        <Image source={{ uri: post.imageUri }} style={{ width: '100%', height: 200, borderRadius: 12, marginBottom: 12 }} resizeMode="cover" />
+      {resolvedImage && (
+        <Image source={{ uri: resolvedImage }} style={{ width: '100%', height: 200, borderRadius: 12, marginBottom: 12 }} resizeMode="cover" />
       )}
       <View style={styles.cardFooter}>
         <View style={styles.adminBadge}>
@@ -102,11 +115,14 @@ export default function HomeScreen() {
   const [content, setContent] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<Category>('general');
   const [imageUri, setImageUri] = useState<string | null>(null);
+  const [imageBase64, setImageBase64] = useState<string | null>(null);
+  const [isPosting, setIsPosting] = useState(false);
 
   const pickImage = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: 'images', quality: 0.7, base64: true });
     if (!result.canceled && result.assets[0]) {
       setImageUri(result.assets[0].uri);
+      setImageBase64(result.assets[0].base64 || null);
     }
   };
 
@@ -140,10 +156,21 @@ export default function HomeScreen() {
       Alert.alert('Missing Info', 'Please add a title and content.');
       return;
     }
-    await addAnalysisPost({ title: title.trim(), content: content.trim(), category: selectedCategory, channel: 'free', imageUri: imageUri || undefined }, 'free');
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    setTitle(''); setContent(''); setSelectedCategory('general'); setImageUri(null); setShowCompose(false);
-    await loadPosts();
+    setIsPosting(true);
+    try {
+      let serverImageUrl: string | undefined;
+      if (imageBase64) {
+        serverImageUrl = await uploadImage(imageBase64, 'image/jpeg');
+      }
+      await addAnalysisPost({ title: title.trim(), content: content.trim(), category: selectedCategory, channel: 'free', imageUri: serverImageUrl || undefined }, 'free');
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      setTitle(''); setContent(''); setSelectedCategory('general'); setImageUri(null); setImageBase64(null); setShowCompose(false);
+      await loadPosts();
+    } catch (err: any) {
+      Alert.alert('Error', err?.message || 'Failed to create post');
+    } finally {
+      setIsPosting(false);
+    }
   };
 
   const handleDelete = async (id: string) => {
@@ -262,8 +289,8 @@ export default function HomeScreen() {
                   <Ionicons name="close" size={24} color={c.textSecondary} />
                 </Pressable>
                 <Text style={[styles.composeTitle, { color: c.text }]}>New Free Analysis</Text>
-                <Pressable onPress={handlePost} style={[styles.postBtn, { backgroundColor: c.gold }]}>
-                  <Text style={[styles.postBtnText, { color: '#0A0A0A' }]}>Post</Text>
+                <Pressable onPress={handlePost} disabled={isPosting} style={[styles.postBtn, { backgroundColor: c.gold, opacity: isPosting ? 0.5 : 1 }]}>
+                  <Text style={[styles.postBtnText, { color: '#0A0A0A' }]}>{isPosting ? 'Posting...' : 'Post'}</Text>
                 </Pressable>
               </View>
               <View style={styles.categoryRow}>
@@ -290,7 +317,7 @@ export default function HomeScreen() {
               {imageUri && (
                 <View style={{ marginBottom: 12 }}>
                   <Image source={{ uri: imageUri }} style={{ width: '100%', height: 200, borderRadius: 12 }} resizeMode="cover" />
-                  <Pressable onPress={() => setImageUri(null)} style={{ position: 'absolute', top: 8, right: 8, backgroundColor: 'rgba(0,0,0,0.6)', borderRadius: 12, width: 24, height: 24, alignItems: 'center', justifyContent: 'center' }}>
+                  <Pressable onPress={() => { setImageUri(null); setImageBase64(null); }} style={{ position: 'absolute', top: 8, right: 8, backgroundColor: 'rgba(0,0,0,0.6)', borderRadius: 12, width: 24, height: 24, alignItems: 'center', justifyContent: 'center' }}>
                     <Ionicons name="close" size={16} color="#fff" />
                   </Pressable>
                 </View>
