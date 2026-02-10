@@ -160,7 +160,28 @@ function serveLandingPage({
   res.status(200).send(html);
 }
 
-function configureExpoAndLanding(app: express.Application) {
+function getDistDir() {
+  return path.resolve(process.cwd(), "dist");
+}
+
+function getWebIndexHtml(distDir: string): string {
+  let indexHtml = fs.readFileSync(path.join(distDir, "index.html"), "utf-8");
+  const cacheBustMeta = `<meta http-equiv="cache-control" content="no-cache, no-store, must-revalidate"><meta http-equiv="pragma" content="no-cache"><meta http-equiv="expires" content="0">`;
+  const swUnregister = `<script>if('serviceWorker' in navigator){navigator.serviceWorker.getRegistrations().then(function(r){r.forEach(function(w){w.unregister()})})}</script>`;
+  indexHtml = indexHtml.replace('</head>', cacheBustMeta + '</head>');
+  indexHtml = indexHtml.replace('</body>', swUnregister + '</body>');
+  return indexHtml;
+}
+
+function sendWebApp(res: Response, indexHtml: string) {
+  res.setHeader("Content-Type", "text/html; charset=utf-8");
+  res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+  res.setHeader("Pragma", "no-cache");
+  res.setHeader("Expires", "0");
+  return res.status(200).send(indexHtml);
+}
+
+function configureExpoManifestAndStatic(app: express.Application) {
   const templatePath = path.resolve(
     process.cwd(),
     "server",
@@ -170,7 +191,7 @@ function configureExpoAndLanding(app: express.Application) {
   const landingPageTemplate = fs.readFileSync(templatePath, "utf-8");
   const appName = getAppName();
 
-  const distDir = path.resolve(process.cwd(), "dist");
+  const distDir = getDistDir();
   const hasWebBuild = fs.existsSync(path.join(distDir, "index.html"));
 
   log("Serving static Expo files with dynamic manifest routing");
@@ -195,16 +216,7 @@ function configureExpoAndLanding(app: express.Application) {
     }
 
     if (hasWebBuild && req.path === "/") {
-      let indexHtml = fs.readFileSync(path.join(distDir, "index.html"), "utf-8");
-      const cacheBustMeta = `<meta http-equiv="cache-control" content="no-cache, no-store, must-revalidate"><meta http-equiv="pragma" content="no-cache"><meta http-equiv="expires" content="0">`;
-      const swUnregister = `<script>if('serviceWorker' in navigator){navigator.serviceWorker.getRegistrations().then(function(r){r.forEach(function(w){w.unregister()})})}</script>`;
-      indexHtml = indexHtml.replace('</head>', cacheBustMeta + '</head>');
-      indexHtml = indexHtml.replace('</body>', swUnregister + '</body>');
-      res.setHeader("Content-Type", "text/html; charset=utf-8");
-      res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
-      res.setHeader("Pragma", "no-cache");
-      res.setHeader("Expires", "0");
-      return res.status(200).send(indexHtml);
+      return sendWebApp(res, getWebIndexHtml(distDir));
     }
 
     if (req.path === "/") {
@@ -225,6 +237,13 @@ function configureExpoAndLanding(app: express.Application) {
   app.use("/assets", express.static(path.resolve(process.cwd(), "assets"), { maxAge: 0, etag: false }));
   app.use(express.static(path.resolve(process.cwd(), "static-build"), { maxAge: 0, etag: false }));
 
+  log("Expo routing: Checking expo-platform header on / and /manifest");
+}
+
+function configureSpaCatchAll(app: express.Application) {
+  const distDir = getDistDir();
+  const hasWebBuild = fs.existsSync(path.join(distDir, "index.html"));
+
   if (hasWebBuild) {
     app.use((req: Request, res: Response, next: NextFunction) => {
       if (req.path.startsWith("/api") || req.path.startsWith("/manifest")) {
@@ -234,20 +253,9 @@ function configureExpoAndLanding(app: express.Application) {
       if (platform) {
         return next();
       }
-      let indexHtml = fs.readFileSync(path.join(distDir, "index.html"), "utf-8");
-      const cacheBustMeta = `<meta http-equiv="cache-control" content="no-cache, no-store, must-revalidate"><meta http-equiv="pragma" content="no-cache"><meta http-equiv="expires" content="0">`;
-      const swUnregister = `<script>if('serviceWorker' in navigator){navigator.serviceWorker.getRegistrations().then(function(r){r.forEach(function(w){w.unregister()})})}</script>`;
-      indexHtml = indexHtml.replace('</head>', cacheBustMeta + '</head>');
-      indexHtml = indexHtml.replace('</body>', swUnregister + '</body>');
-      res.setHeader("Content-Type", "text/html; charset=utf-8");
-      res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
-      res.setHeader("Pragma", "no-cache");
-      res.setHeader("Expires", "0");
-      return res.status(200).send(indexHtml);
+      return sendWebApp(res, getWebIndexHtml(distDir));
     });
   }
-
-  log("Expo routing: Checking expo-platform header on / and /manifest");
 }
 
 function setupErrorHandler(app: express.Application) {
@@ -276,9 +284,21 @@ function setupErrorHandler(app: express.Application) {
   setupBodyParsing(app);
   setupRequestLogging(app);
 
-  configureExpoAndLanding(app);
+  configureExpoManifestAndStatic(app);
 
   const server = await registerRoutes(app);
+
+  app.get("/api/health", async (_req, res) => {
+    try {
+      const { storage } = await import("./storage");
+      const posts = await storage.getAnalysisPosts("free");
+      res.json({ status: "ok", postCount: posts.length, timestamp: Date.now() });
+    } catch (err: any) {
+      res.status(500).json({ status: "error", error: err?.message });
+    }
+  });
+
+  configureSpaCatchAll(app);
 
   setupErrorHandler(app);
 
