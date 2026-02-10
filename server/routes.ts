@@ -8,6 +8,15 @@ function generateId(): string {
 
 export async function registerRoutes(app: Express): Promise<Server> {
 
+  app.get("/api/health", async (_req, res) => {
+    try {
+      const posts = await storage.getAnalysisPosts("free");
+      res.json({ status: "ok", postCount: posts.length, timestamp: Date.now() });
+    } catch (err: any) {
+      res.status(500).json({ status: "error", error: err?.message });
+    }
+  });
+
   app.get("/api/posts/:channel", async (req, res) => {
     try {
       const posts = await storage.getAnalysisPosts(req.params.channel);

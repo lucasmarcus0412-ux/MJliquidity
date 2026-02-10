@@ -288,16 +288,6 @@ function setupErrorHandler(app: express.Application) {
 
   const server = await registerRoutes(app);
 
-  app.get("/api/health", async (_req, res) => {
-    try {
-      const { storage } = await import("./storage");
-      const posts = await storage.getAnalysisPosts("free");
-      res.json({ status: "ok", postCount: posts.length, timestamp: Date.now() });
-    } catch (err: any) {
-      res.status(500).json({ status: "error", error: err?.message });
-    }
-  });
-
   configureSpaCatchAll(app);
 
   setupErrorHandler(app);

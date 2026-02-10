@@ -499,9 +499,11 @@ function updateManifests(manifests, timestamp, baseUrl, assetsByHash) {
 async function buildWebBundle() {
   console.log("Building web bundle (npx expo export --platform web)...");
   return new Promise((resolve, reject) => {
+    const webEnv = { ...process.env };
+    delete webEnv.EXPO_PUBLIC_DOMAIN;
     const proc = spawn("npx", ["expo", "export", "--platform", "web"], {
       stdio: ["ignore", "pipe", "pipe"],
-      env: { ...process.env },
+      env: webEnv,
     });
     let stdout = "";
     let stderr = "";

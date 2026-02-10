@@ -14,10 +14,11 @@ export function getApiUrl(): string {
   }
 
   if (typeof window !== 'undefined' && window.location) {
-    return window.location.origin + '/';
+    const origin = window.location.origin;
+    return origin.endsWith('/') ? origin : origin + '/';
   }
 
-  throw new Error("EXPO_PUBLIC_DOMAIN is not set");
+  return 'http://localhost:5000/';
 }
 
 async function throwIfResNotOk(res: Response) {
