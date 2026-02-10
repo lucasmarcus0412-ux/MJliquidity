@@ -122,7 +122,11 @@ export default function HomeScreen() {
   }, []);
 
   useFocusEffect(
-    useCallback(() => { loadPosts(); }, [loadPosts])
+    useCallback(() => {
+      loadPosts();
+      const interval = setInterval(loadPosts, 30000);
+      return () => clearInterval(interval);
+    }, [loadPosts])
   );
 
   const onRefresh = async () => {

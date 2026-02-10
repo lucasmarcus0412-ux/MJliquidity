@@ -195,7 +195,11 @@ function configureExpoAndLanding(app: express.Application) {
     }
 
     if (hasWebBuild && req.path === "/") {
-      const indexHtml = fs.readFileSync(path.join(distDir, "index.html"), "utf-8");
+      let indexHtml = fs.readFileSync(path.join(distDir, "index.html"), "utf-8");
+      const cacheBustMeta = `<meta http-equiv="cache-control" content="no-cache, no-store, must-revalidate"><meta http-equiv="pragma" content="no-cache"><meta http-equiv="expires" content="0">`;
+      const swUnregister = `<script>if('serviceWorker' in navigator){navigator.serviceWorker.getRegistrations().then(function(r){r.forEach(function(w){w.unregister()})})}</script>`;
+      indexHtml = indexHtml.replace('</head>', cacheBustMeta + '</head>');
+      indexHtml = indexHtml.replace('</body>', swUnregister + '</body>');
       res.setHeader("Content-Type", "text/html; charset=utf-8");
       res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
       res.setHeader("Pragma", "no-cache");
@@ -216,10 +220,10 @@ function configureExpoAndLanding(app: express.Application) {
   });
 
   if (hasWebBuild) {
-    app.use(express.static(distDir, { maxAge: '1h' }));
+    app.use(express.static(distDir, { maxAge: 0, etag: false }));
   }
-  app.use("/assets", express.static(path.resolve(process.cwd(), "assets"), { maxAge: '1h' }));
-  app.use(express.static(path.resolve(process.cwd(), "static-build"), { maxAge: '1h' }));
+  app.use("/assets", express.static(path.resolve(process.cwd(), "assets"), { maxAge: 0, etag: false }));
+  app.use(express.static(path.resolve(process.cwd(), "static-build"), { maxAge: 0, etag: false }));
 
   if (hasWebBuild) {
     app.use((req: Request, res: Response, next: NextFunction) => {
@@ -230,7 +234,11 @@ function configureExpoAndLanding(app: express.Application) {
       if (platform) {
         return next();
       }
-      const indexHtml = fs.readFileSync(path.join(distDir, "index.html"), "utf-8");
+      let indexHtml = fs.readFileSync(path.join(distDir, "index.html"), "utf-8");
+      const cacheBustMeta = `<meta http-equiv="cache-control" content="no-cache, no-store, must-revalidate"><meta http-equiv="pragma" content="no-cache"><meta http-equiv="expires" content="0">`;
+      const swUnregister = `<script>if('serviceWorker' in navigator){navigator.serviceWorker.getRegistrations().then(function(r){r.forEach(function(w){w.unregister()})})}</script>`;
+      indexHtml = indexHtml.replace('</head>', cacheBustMeta + '</head>');
+      indexHtml = indexHtml.replace('</body>', swUnregister + '</body>');
       res.setHeader("Content-Type", "text/html; charset=utf-8");
       res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
       res.setHeader("Pragma", "no-cache");

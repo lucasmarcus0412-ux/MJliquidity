@@ -109,7 +109,7 @@ export default function ProMarketsScreen() {
     useCallback(() => {
       loadPosts();
       loadMessages();
-      pollRef.current = setInterval(loadMessages, 3000);
+      pollRef.current = setInterval(() => { loadMessages(); loadPosts(); }, 3000);
       return () => { if (pollRef.current) clearInterval(pollRef.current); };
     }, [loadPosts, loadMessages])
   );
