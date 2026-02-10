@@ -496,6 +496,31 @@ function updateManifests(manifests, timestamp, baseUrl, assetsByHash) {
   console.log("Manifests updated");
 }
 
+async function buildWebBundle() {
+  console.log("Building web bundle (npx expo export --platform web)...");
+  return new Promise((resolve, reject) => {
+    const proc = spawn("npx", ["expo", "export", "--platform", "web"], {
+      stdio: ["ignore", "pipe", "pipe"],
+      env: { ...process.env },
+    });
+    let stdout = "";
+    let stderr = "";
+    if (proc.stdout) proc.stdout.on("data", (d) => { stdout += d; });
+    if (proc.stderr) proc.stderr.on("data", (d) => { stderr += d; });
+    proc.on("close", (code) => {
+      if (code === 0) {
+        console.log("Web bundle built successfully into dist/");
+        resolve();
+      } else {
+        console.error("Web build stdout:", stdout);
+        console.error("Web build stderr:", stderr);
+        reject(new Error(`Web export failed with code ${code}`));
+      }
+    });
+    proc.on("error", reject);
+  });
+}
+
 async function main() {
   console.log("Building static Expo Go deployment...");
 
@@ -504,6 +529,8 @@ async function main() {
   const domain = getDeploymentDomain();
   const baseUrl = `https://${domain}`;
   const timestamp = `${Date.now()}-${process.pid}`;
+
+  await buildWebBundle();
 
   prepareDirectories(timestamp);
   clearMetroCache();
