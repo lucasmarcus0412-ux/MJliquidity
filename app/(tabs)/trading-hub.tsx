@@ -111,7 +111,7 @@ export default function TradingHubScreen() {
           Brokers, Prop Firms & Copy Trading
         </Text>
 
-        <Text style={[styles.sectionTitle, { color: c.text }]}>Brokers</Text>
+        <Text style={[styles.sectionTitle, { color: c.text }]}>Trusted Broker Partners</Text>
         {BROKERS.map((broker, i) => (
           <LinkItem key={i} {...broker} icon="business-outline" />
         ))}
