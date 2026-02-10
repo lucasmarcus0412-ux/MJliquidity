@@ -197,6 +197,9 @@ function configureExpoAndLanding(app: express.Application) {
     if (hasWebBuild && req.path === "/") {
       const indexHtml = fs.readFileSync(path.join(distDir, "index.html"), "utf-8");
       res.setHeader("Content-Type", "text/html; charset=utf-8");
+      res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+      res.setHeader("Pragma", "no-cache");
+      res.setHeader("Expires", "0");
       return res.status(200).send(indexHtml);
     }
 
@@ -213,10 +216,10 @@ function configureExpoAndLanding(app: express.Application) {
   });
 
   if (hasWebBuild) {
-    app.use(express.static(distDir));
+    app.use(express.static(distDir, { maxAge: '1h' }));
   }
-  app.use("/assets", express.static(path.resolve(process.cwd(), "assets")));
-  app.use(express.static(path.resolve(process.cwd(), "static-build")));
+  app.use("/assets", express.static(path.resolve(process.cwd(), "assets"), { maxAge: '1h' }));
+  app.use(express.static(path.resolve(process.cwd(), "static-build"), { maxAge: '1h' }));
 
   if (hasWebBuild) {
     app.use((req: Request, res: Response, next: NextFunction) => {
@@ -229,6 +232,9 @@ function configureExpoAndLanding(app: express.Application) {
       }
       const indexHtml = fs.readFileSync(path.join(distDir, "index.html"), "utf-8");
       res.setHeader("Content-Type", "text/html; charset=utf-8");
+      res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+      res.setHeader("Pragma", "no-cache");
+      res.setHeader("Expires", "0");
       return res.status(200).send(indexHtml);
     });
   }
