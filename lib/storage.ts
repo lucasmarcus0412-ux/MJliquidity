@@ -1,6 +1,17 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { apiRequest, getApiUrl } from './query-client';
-import { fetch } from 'expo/fetch';
+import { Platform } from 'react-native';
+
+const apiFetch: typeof globalThis.fetch = (() => {
+  if (Platform.OS === "web") {
+    return globalThis.fetch.bind(globalThis);
+  }
+  try {
+    return require("expo/fetch").fetch;
+  } catch {
+    return globalThis.fetch.bind(globalThis);
+  }
+})();
 
 const KEYS = {
   ADMIN_LOGGED_IN: 'mjl_admin_logged_in',
@@ -61,8 +72,18 @@ export async function setAdminStatus(loggedIn: boolean): Promise<void> {
 export async function getAnalysisPosts(channel: FeedChannel = 'free'): Promise<AnalysisPost[]> {
   const baseUrl = getApiUrl();
   const url = new URL(`/api/posts/${channel}`, baseUrl);
-  const res = await fetch(url.toString());
+  const res = await apiFetch(url.toString(), {
+    headers: { "Accept": "application/json" },
+  });
   if (!res.ok) throw new Error(`Failed to load posts (${res.status})`);
+  const contentType = res.headers.get("content-type") || "";
+  if (!contentType.includes("application/json")) {
+    const text = await res.text();
+    if (text.trim().startsWith("<!DOCTYPE") || text.trim().startsWith("<html")) {
+      throw new Error("Server returned HTML instead of data. Please try refreshing.");
+    }
+    throw new Error(`Unexpected response type: ${contentType}`);
+  }
   const data = await res.json();
   return data.map((p: any) => ({
     ...p,
@@ -89,7 +110,9 @@ export async function getChatMessages(channel?: ChatChannel): Promise<ChatMessag
   const ch = channel || 'gold_vip';
   const baseUrl = getApiUrl();
   const url = new URL(`/api/chat/${ch}`, baseUrl);
-  const res = await fetch(url.toString());
+  const res = await apiFetch(url.toString(), {
+    headers: { "Accept": "application/json" },
+  });
   if (!res.ok) throw new Error(`Failed to load chat (${res.status})`);
   return await res.json();
 }
@@ -113,7 +136,9 @@ export async function getEducationPosts(): Promise<EducationPost[]> {
   try {
     const baseUrl = getApiUrl();
     const url = new URL('/api/education', baseUrl);
-    const res = await fetch(url.toString());
+    const res = await apiFetch(url.toString(), {
+      headers: { "Accept": "application/json" },
+    });
     if (!res.ok) return [];
     return await res.json();
   } catch (err) {
@@ -138,7 +163,9 @@ export async function getModerators(): Promise<Moderator[]> {
   try {
     const baseUrl = getApiUrl();
     const url = new URL('/api/moderators', baseUrl);
-    const res = await fetch(url.toString());
+    const res = await apiFetch(url.toString(), {
+      headers: { "Accept": "application/json" },
+    });
     if (!res.ok) return [];
     return await res.json();
   } catch (err) {

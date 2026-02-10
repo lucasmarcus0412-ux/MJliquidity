@@ -1,10 +1,17 @@
-import { fetch } from "expo/fetch";
+import { Platform } from "react-native";
 import { QueryClient, QueryFunction } from "@tanstack/react-query";
 
-/**
- * Gets the base URL for the Express API server (e.g., "http://localhost:3000")
- * @returns {string} The API base URL
- */
+const apiFetch: typeof globalThis.fetch = (() => {
+  if (Platform.OS === "web") {
+    return globalThis.fetch.bind(globalThis);
+  }
+  try {
+    return require("expo/fetch").fetch;
+  } catch {
+    return globalThis.fetch.bind(globalThis);
+  }
+})();
+
 export function getApiUrl(): string {
   let host = process.env.EXPO_PUBLIC_DOMAIN;
 
@@ -28,6 +35,16 @@ async function throwIfResNotOk(res: Response) {
   }
 }
 
+async function ensureJsonResponse(res: Response): Promise<void> {
+  const ct = res.headers.get("content-type") || "";
+  if (!ct.includes("application/json")) {
+    const body = await res.text();
+    if (body.trim().startsWith("<!DOCTYPE") || body.trim().startsWith("<html")) {
+      throw new Error("Server returned HTML instead of JSON. The API may be unreachable.");
+    }
+  }
+}
+
 export async function apiRequest(
   method: string,
   route: string,
@@ -36,13 +53,17 @@ export async function apiRequest(
   const baseUrl = getApiUrl();
   const url = new URL(route, baseUrl);
 
-  const res = await fetch(url.toString(), {
+  const res = await apiFetch(url.toString(), {
     method,
-    headers: data ? { "Content-Type": "application/json" } : {},
+    headers: {
+      "Accept": "application/json",
+      ...(data ? { "Content-Type": "application/json" } : {}),
+    },
     body: data ? JSON.stringify(data) : undefined,
     credentials: "include",
   });
 
+  await ensureJsonResponse(res);
   await throwIfResNotOk(res);
   return res;
 }
@@ -56,14 +77,16 @@ export const getQueryFn: <T>(options: {
     const baseUrl = getApiUrl();
     const url = new URL(queryKey.join("/") as string, baseUrl);
 
-    const res = await fetch(url.toString(), {
+    const res = await apiFetch(url.toString(), {
       credentials: "include",
+      headers: { "Accept": "application/json" },
     });
 
     if (unauthorizedBehavior === "returnNull" && res.status === 401) {
       return null;
     }
 
+    await ensureJsonResponse(res);
     await throwIfResNotOk(res);
     return await res.json();
   };

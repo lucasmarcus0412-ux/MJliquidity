@@ -8,6 +8,13 @@ function generateId(): string {
 
 export async function registerRoutes(app: Express): Promise<Server> {
 
+  app.use("/api", (_req, res, next) => {
+    res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+    res.setHeader("Pragma", "no-cache");
+    res.setHeader("Expires", "0");
+    next();
+  });
+
   app.get("/api/health", async (_req, res) => {
     try {
       const posts = await storage.getAnalysisPosts("free");
