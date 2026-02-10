@@ -31,6 +31,8 @@ import {
   addChatMessage,
   deleteChatMessage,
   uploadImage,
+  banUser,
+  checkUserBanned,
 } from '@/lib/storage';
 import { getApiUrl } from '@/lib/query-client';
 import { useFocusEffect } from 'expo-router';
@@ -89,6 +91,7 @@ export default function ProMarketsScreen() {
   const [imageUri, setImageUri] = useState<string | null>(null);
   const [imageBase64, setImageBase64] = useState<string | null>(null);
   const [isPosting, setIsPosting] = useState(false);
+  const [isBanned, setIsBanned] = useState(false);
   const flatListRef = useRef<FlatList>(null);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -184,11 +187,43 @@ export default function ProMarketsScreen() {
     if (!inputText.trim()) return;
     const displayName = isAdmin ? 'MJliquidity' : userName;
     if (!displayName) { setShowNamePrompt(true); return; }
-    await addChatMessage({ username: displayName, text: inputText.trim(), isAdmin, isModerator: !isAdmin && isModerator }, 'four_markets');
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    setInputText('');
-    await loadMessages();
-    setTimeout(() => flatListRef.current?.scrollToEnd({ animated: true }), 100);
+    try {
+      await addChatMessage({ username: displayName, text: inputText.trim(), isAdmin, isModerator: !isAdmin && isModerator }, 'four_markets');
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      setInputText('');
+      await loadMessages();
+      setTimeout(() => flatListRef.current?.scrollToEnd({ animated: true }), 100);
+    } catch (err: any) {
+      if (err?.message?.includes('403') || err?.message?.includes('banned')) {
+        setIsBanned(true);
+        Alert.alert('Banned', 'You have been banned from chat.');
+      } else {
+        Alert.alert('Error', 'Failed to send message.');
+      }
+    }
+  };
+
+  const handleBanUser = async (username: string) => {
+    const action = async (confirmed: boolean) => {
+      if (!confirmed) return;
+      try {
+        const bannedBy = isAdmin ? 'Admin' : userName || 'Moderator';
+        await banUser(username, bannedBy, 'Chat violation');
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        Alert.alert('User Banned', `${username} has been banned from chat.`);
+      } catch (err) {
+        console.error('Ban failed:', err);
+        Alert.alert('Error', 'Failed to ban user.');
+      }
+    };
+    if (Platform.OS === 'web') {
+      action(window.confirm(`Ban "${username}" from chat?`));
+    } else {
+      Alert.alert('Ban User', `Ban "${username}" from all chats?`, [
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'Ban', style: 'destructive', onPress: () => action(true) },
+      ]);
+    }
   };
 
   const handleDeleteMessage = async (id: string) => {
@@ -392,6 +427,11 @@ export default function ProMarketsScreen() {
                   </View>
                   <View style={styles.messageHeaderRight}>
                     <Text style={[styles.messageTime, { color: c.textMuted }]}>{formatChatTime(item.timestamp)}</Text>
+                    {(isAdmin || isModerator) && !item.isAdmin && (
+                      <Pressable onPress={() => handleBanUser(item.username)} hitSlop={8}>
+                        <Ionicons name="ban-outline" size={14} color="#FF5252" />
+                      </Pressable>
+                    )}
                     {(isAdmin || isModerator) && (
                       <Pressable onPress={() => handleDeleteMessage(item.id)} hitSlop={8}>
                         <Ionicons name="trash-outline" size={14} color={c.textMuted} />
@@ -448,26 +488,35 @@ export default function ProMarketsScreen() {
             </View>
           )}
 
-          <View style={[styles.inputContainer, { backgroundColor: c.surface, borderTopColor: c.border, paddingBottom: Platform.OS === 'web' ? 42 : Math.max(insets.bottom, 8) }]}>
-            <View style={[styles.inputWrapper, { backgroundColor: c.inputBackground, borderColor: c.inputBorder }]}>
-              <TextInput
-                placeholder="Type a message..."
-                placeholderTextColor={c.textMuted}
-                style={[styles.textInput, { color: c.text }]}
-                value={inputText}
-                onChangeText={setInputText}
-                onSubmitEditing={handleSendMessage}
-                returnKeyType="send"
-              />
-              <Pressable
-                onPress={handleSendMessage}
-                disabled={!inputText.trim()}
-                style={[styles.sendBtn, { backgroundColor: inputText.trim() ? c.gold : c.cardBorder }]}
-              >
-                <Ionicons name="send" size={16} color={inputText.trim() ? '#0A0A0A' : c.textMuted} />
-              </Pressable>
+          {isBanned ? (
+            <View style={[styles.inputContainer, { backgroundColor: c.surface, borderTopColor: c.border, paddingBottom: Platform.OS === 'web' ? 42 : Math.max(insets.bottom, 8) }]}>
+              <View style={styles.bannedBar}>
+                <Ionicons name="ban-outline" size={16} color="#FF5252" />
+                <Text style={styles.bannedText}>You have been banned from chat</Text>
+              </View>
             </View>
-          </View>
+          ) : (
+            <View style={[styles.inputContainer, { backgroundColor: c.surface, borderTopColor: c.border, paddingBottom: Platform.OS === 'web' ? 42 : Math.max(insets.bottom, 8) }]}>
+              <View style={[styles.inputWrapper, { backgroundColor: c.inputBackground, borderColor: c.inputBorder }]}>
+                <TextInput
+                  placeholder="Type a message..."
+                  placeholderTextColor={c.textMuted}
+                  style={[styles.textInput, { color: c.text }]}
+                  value={inputText}
+                  onChangeText={setInputText}
+                  onSubmitEditing={handleSendMessage}
+                  returnKeyType="send"
+                />
+                <Pressable
+                  onPress={handleSendMessage}
+                  disabled={!inputText.trim()}
+                  style={[styles.sendBtn, { backgroundColor: inputText.trim() ? c.gold : c.cardBorder }]}
+                >
+                  <Ionicons name="send" size={16} color={inputText.trim() ? '#0A0A0A' : c.textMuted} />
+                </Pressable>
+              </View>
+            </View>
+          )}
         </>
       )}
 
@@ -607,4 +656,6 @@ const styles = StyleSheet.create({
   paywallBtn: { paddingHorizontal: 40, paddingVertical: 14, borderRadius: 24, marginBottom: 8 },
   paywallBtnText: { fontSize: 16, fontFamily: 'DMSans_700Bold', color: '#0A0A0A' },
   paywallPrice: { fontSize: 13, fontFamily: 'DMSans_400Regular' },
+  bannedBar: { flexDirection: 'row' as const, alignItems: 'center' as const, justifyContent: 'center' as const, gap: 8, paddingVertical: 12 },
+  bannedText: { fontSize: 14, fontFamily: 'DMSans_600SemiBold', color: '#FF5252' },
 });

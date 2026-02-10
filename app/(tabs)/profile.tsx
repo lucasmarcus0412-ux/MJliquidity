@@ -24,9 +24,12 @@ import Colors from '@/constants/colors';
 import { useApp } from '@/lib/AppContext';
 import {
   EducationPost,
+  BannedUser,
   getEducationPosts,
   addEducationPost,
   deleteEducationPost,
+  getBannedUsers,
+  unbanUser,
 } from '@/lib/storage';
 import { useFocusEffect } from 'expo-router';
 
@@ -88,6 +91,8 @@ export default function ProfileScreen() {
   const [showPrivacyPolicy, setShowPrivacyPolicy] = useState(false);
   const [showModManager, setShowModManager] = useState(false);
   const [modNameInput, setModNameInput] = useState('');
+  const [showBanManager, setShowBanManager] = useState(false);
+  const [bannedUsers, setBannedUsers] = useState<BannedUser[]>([]);
 
   const loadEducation = useCallback(async () => {
     const data = await getEducationPosts();
@@ -465,6 +470,17 @@ export default function ProfileScreen() {
                 <Ionicons name="chevron-forward" size={18} color={c.textMuted} />
               </Pressable>
               <View style={[styles.divider, { backgroundColor: c.border }]} />
+              <Pressable onPress={async () => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); const bans = await getBannedUsers(); setBannedUsers(bans); setShowBanManager(true); }} style={styles.settingsRow}>
+                <View style={styles.settingsRowLeft}>
+                  <Ionicons name="ban-outline" size={20} color="#FF5252" />
+                  <View>
+                    <Text style={[styles.settingsLabel, { color: c.text }]}>Manage Banned Users</Text>
+                    <Text style={[styles.settingsValue, { color: c.textMuted }]}>View and unban users</Text>
+                  </View>
+                </View>
+                <Ionicons name="chevron-forward" size={18} color={c.textMuted} />
+              </Pressable>
+              <View style={[styles.divider, { backgroundColor: c.border }]} />
               <Pressable onPress={handleLogout} style={styles.settingsRow}>
                 <View style={styles.settingsRowLeft}>
                   <Ionicons name="log-out-outline" size={20} color={c.error} />
@@ -670,6 +686,59 @@ export default function ProfileScreen() {
             </View>
           </View>
         </KeyboardAvoidingView>
+      </Modal>
+
+      <Modal visible={showBanManager} animationType="slide" transparent>
+        <View style={styles.modalOverlay}>
+          <View style={[styles.composeModal, { backgroundColor: c.surface }]}>
+            <View style={styles.composeHeader}>
+              <Pressable onPress={() => setShowBanManager(false)} hitSlop={12}>
+                <Ionicons name="close" size={24} color={c.textSecondary} />
+              </Pressable>
+              <Text style={[styles.composeTitle, { color: c.text }]}>Banned Users</Text>
+              <View style={{ width: 44 }} />
+            </View>
+
+            <ScrollView style={styles.modList} showsVerticalScrollIndicator={false}>
+              {bannedUsers.length === 0 ? (
+                <Text style={[styles.modEmptyText, { color: c.textMuted }]}>No banned users</Text>
+              ) : (
+                bannedUsers.map((ban) => (
+                  <View key={ban.id} style={[styles.modRow, { borderBottomColor: c.border }]}>
+                    <View style={styles.modRowLeft}>
+                      <View style={[styles.modAvatar, { backgroundColor: 'rgba(255, 82, 82, 0.15)' }]}>
+                        <Ionicons name="ban-outline" size={14} color="#FF5252" />
+                      </View>
+                      <View>
+                        <Text style={[styles.settingsLabel, { color: c.text }]}>{ban.username}</Text>
+                        <Text style={[styles.settingsValue, { color: c.textMuted }]}>
+                          Banned {new Date(ban.bannedAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}
+                          {ban.reason ? ` - ${ban.reason}` : ''}
+                        </Text>
+                      </View>
+                    </View>
+                    <Pressable
+                      onPress={() => {
+                        Alert.alert('Unban User', `Unban ${ban.username} from chat?`, [
+                          { text: 'Cancel', style: 'cancel' },
+                          { text: 'Unban', onPress: async () => {
+                            await unbanUser(ban.id);
+                            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+                            const updated = await getBannedUsers();
+                            setBannedUsers(updated);
+                          }},
+                        ]);
+                      }}
+                      hitSlop={12}
+                    >
+                      <Ionicons name="checkmark-circle-outline" size={20} color="#4CAF50" />
+                    </Pressable>
+                  </View>
+                ))
+              )}
+            </ScrollView>
+          </View>
+        </View>
       </Modal>
 
       <Modal visible={showDisclaimer} animationType="slide" transparent>

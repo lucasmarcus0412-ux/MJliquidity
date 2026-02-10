@@ -197,6 +197,58 @@ export async function isUserModerator(username: string): Promise<boolean> {
   return mods.some(m => m.username.toLowerCase() === username.toLowerCase());
 }
 
+export interface BannedUser {
+  id: string;
+  username: string;
+  reason: string | null;
+  bannedBy: string;
+  bannedAt: number;
+}
+
+export async function getBannedUsers(): Promise<BannedUser[]> {
+  try {
+    const baseUrl = getApiUrl();
+    const url = new URL('/api/banned', baseUrl);
+    const res = await apiFetch(url.toString(), {
+      headers: { "Accept": "application/json" },
+    });
+    if (!res.ok) return [];
+    return await res.json();
+  } catch (err) {
+    console.error('Error fetching banned users:', err);
+    return [];
+  }
+}
+
+export async function checkUserBanned(username: string): Promise<boolean> {
+  try {
+    const baseUrl = getApiUrl();
+    const url = new URL(`/api/banned/check/${encodeURIComponent(username)}`, baseUrl);
+    const res = await apiFetch(url.toString(), {
+      headers: { "Accept": "application/json" },
+    });
+    if (!res.ok) return false;
+    const data = await res.json();
+    return data.banned === true;
+  } catch (err) {
+    console.error('Error checking ban status:', err);
+    return false;
+  }
+}
+
+export async function banUser(username: string, bannedBy: string, reason?: string): Promise<BannedUser> {
+  const res = await apiRequest('POST', '/api/banned', {
+    username,
+    bannedBy,
+    reason: reason || null,
+  });
+  return await res.json();
+}
+
+export async function unbanUser(id: string): Promise<void> {
+  await apiRequest('DELETE', `/api/banned/${id}`);
+}
+
 export async function getUserName(): Promise<string | null> {
   return AsyncStorage.getItem(KEYS.USER_NAME);
 }
