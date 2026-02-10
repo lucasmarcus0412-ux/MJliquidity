@@ -7,11 +7,13 @@ import {
   type ChatMessage,
   type EducationPost,
   type Moderator,
+  type BannedUser,
   users,
   analysisPosts,
   chatMessages,
   educationPosts,
   moderators,
+  bannedUsers,
 } from "@shared/schema";
 
 const db = drizzle(process.env.DATABASE_URL!);
@@ -36,6 +38,11 @@ export interface IStorage {
   getModerators(): Promise<Moderator[]>;
   addModerator(mod: Moderator): Promise<Moderator>;
   removeModerator(id: string): Promise<void>;
+
+  getBannedUsers(): Promise<BannedUser[]>;
+  banUser(ban: BannedUser): Promise<BannedUser>;
+  unbanUser(id: string): Promise<void>;
+  isUserBanned(username: string): Promise<boolean>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -104,6 +111,24 @@ export class DatabaseStorage implements IStorage {
 
   async removeModerator(id: string): Promise<void> {
     await db.delete(moderators).where(eq(moderators.id, id));
+  }
+
+  async getBannedUsers(): Promise<BannedUser[]> {
+    return db.select().from(bannedUsers).orderBy(desc(bannedUsers.bannedAt));
+  }
+
+  async banUser(ban: BannedUser): Promise<BannedUser> {
+    const [created] = await db.insert(bannedUsers).values(ban).returning();
+    return created;
+  }
+
+  async unbanUser(id: string): Promise<void> {
+    await db.delete(bannedUsers).where(eq(bannedUsers.id, id));
+  }
+
+  async isUserBanned(username: string): Promise<boolean> {
+    const all = await db.select().from(bannedUsers);
+    return all.some(b => b.username.toLowerCase() === username.toLowerCase());
   }
 }
 

@@ -44,6 +44,14 @@ export const moderators = pgTable("moderators", {
   addedAt: bigint("added_at", { mode: "number" }).notNull(),
 });
 
+export const bannedUsers = pgTable("banned_users", {
+  id: varchar("id").primaryKey(),
+  username: text("username").notNull(),
+  reason: text("reason"),
+  bannedBy: text("banned_by").notNull(),
+  bannedAt: bigint("banned_at", { mode: "number" }).notNull(),
+});
+
 export const insertUserSchema = createInsertSchema(users).pick({
   username: true,
   password: true,
@@ -55,3 +63,4 @@ export type AnalysisPost = typeof analysisPosts.$inferSelect;
 export type ChatMessage = typeof chatMessages.$inferSelect;
 export type EducationPost = typeof educationPosts.$inferSelect;
 export type Moderator = typeof moderators.$inferSelect;
+export type BannedUser = typeof bannedUsers.$inferSelect;
