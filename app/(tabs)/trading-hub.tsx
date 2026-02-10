@@ -38,9 +38,9 @@ const BROKERS = [
 
 const COPY_TRADING = [
   {
-    name: 'Copy Trading',
-    description: 'Mirror top-performing strategies',
-    url: '',
+    name: 'MJcopier — PU Prime',
+    description: 'Copy trade with referral code 26UCDR',
+    url: 'https://puprime.onelink.me/O5Jx?af_xp=referral&pid=SHARE&deep_link_value=code-26UCDR|platform-copytrading&deep_link_sub1=spid-907723&af_dp=com.pubusiness.pu%3A%2F%2F&af_force_deeplink=true&campaignCode=DjkYH3BslKWqSRCviNlgqw==',
   },
 ];
 
