@@ -80,13 +80,21 @@ export default function GoldIntradayScreen() {
   const memberCount = useMemo(() => new Set(messages.map(m => m.username)).size, [messages]);
 
   const loadPosts = useCallback(async () => {
-    const data = await getAnalysisPosts('gold_vip');
-    setPosts(data);
+    try {
+      const data = await getAnalysisPosts('gold_vip');
+      setPosts(data);
+    } catch (err) {
+      console.error('Error loading gold posts:', err);
+    }
   }, []);
 
   const loadMessages = useCallback(async () => {
-    const data = await getChatMessages('gold_vip');
-    setMessages(data);
+    try {
+      const data = await getChatMessages('gold_vip');
+      setMessages(data);
+    } catch (err) {
+      console.error('Error loading gold chat:', err);
+    }
   }, []);
 
   useFocusEffect(

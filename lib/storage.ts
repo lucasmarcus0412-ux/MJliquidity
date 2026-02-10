@@ -59,20 +59,15 @@ export async function setAdminStatus(loggedIn: boolean): Promise<void> {
 }
 
 export async function getAnalysisPosts(channel: FeedChannel = 'free'): Promise<AnalysisPost[]> {
-  try {
-    const baseUrl = getApiUrl();
-    const url = new URL(`/api/posts/${channel}`, baseUrl);
-    const res = await fetch(url.toString());
-    if (!res.ok) return [];
-    const data = await res.json();
-    return data.map((p: any) => ({
-      ...p,
-      imageUri: p.imageUri || p.image_uri || undefined,
-    }));
-  } catch (err) {
-    console.error('Error fetching posts:', err);
-    return [];
-  }
+  const baseUrl = getApiUrl();
+  const url = new URL(`/api/posts/${channel}`, baseUrl);
+  const res = await fetch(url.toString());
+  if (!res.ok) throw new Error(`Failed to load posts (${res.status})`);
+  const data = await res.json();
+  return data.map((p: any) => ({
+    ...p,
+    imageUri: p.imageUri || p.image_uri || undefined,
+  }));
 }
 
 export async function addAnalysisPost(post: Omit<AnalysisPost, 'id' | 'timestamp'>, channel: FeedChannel = 'free'): Promise<AnalysisPost> {
@@ -91,17 +86,12 @@ export async function deleteAnalysisPost(id: string, _channel: FeedChannel = 'fr
 }
 
 export async function getChatMessages(channel?: ChatChannel): Promise<ChatMessage[]> {
-  try {
-    const ch = channel || 'gold_vip';
-    const baseUrl = getApiUrl();
-    const url = new URL(`/api/chat/${ch}`, baseUrl);
-    const res = await fetch(url.toString());
-    if (!res.ok) return [];
-    return await res.json();
-  } catch (err) {
-    console.error('Error fetching chat:', err);
-    return [];
-  }
+  const ch = channel || 'gold_vip';
+  const baseUrl = getApiUrl();
+  const url = new URL(`/api/chat/${ch}`, baseUrl);
+  const res = await fetch(url.toString());
+  if (!res.ok) throw new Error(`Failed to load chat (${res.status})`);
+  return await res.json();
 }
 
 export async function addChatMessage(msg: Omit<ChatMessage, 'id' | 'timestamp'>, channel?: ChatChannel): Promise<ChatMessage> {

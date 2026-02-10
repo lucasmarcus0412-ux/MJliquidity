@@ -95,6 +95,7 @@ export default function HomeScreen() {
   const insets = useSafeAreaInsets();
   const { isAdmin, isSubscribed, subscriptionUrl } = useApp();
   const [posts, setPosts] = useState<AnalysisPost[]>([]);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   const [showCompose, setShowCompose] = useState(false);
   const [title, setTitle] = useState('');
@@ -110,8 +111,14 @@ export default function HomeScreen() {
   };
 
   const loadPosts = useCallback(async () => {
-    const data = await getAnalysisPosts('free');
-    setPosts(data);
+    try {
+      setLoadError(null);
+      const data = await getAnalysisPosts('free');
+      setPosts(data);
+    } catch (err: any) {
+      setLoadError(err?.message || 'Failed to load posts');
+      setPosts([]);
+    }
   }, []);
 
   useFocusEffect(
@@ -221,11 +228,23 @@ export default function HomeScreen() {
         ) : null}
         ListEmptyComponent={
           <View style={styles.emptyState}>
-            <Ionicons name="analytics-outline" size={48} color={c.textMuted} />
-            <Text style={[styles.emptyTitle, { color: c.textSecondary }]}>No Analysis Yet</Text>
-            <Text style={[styles.emptyText, { color: c.textMuted }]}>
-              Free daily market analysis and key levels will appear here
-            </Text>
+            {loadError ? (
+              <>
+                <Ionicons name="cloud-offline-outline" size={48} color="#E74C3C" />
+                <Text style={[styles.emptyTitle, { color: '#E74C3C' }]}>Connection Issue</Text>
+                <Text style={[styles.emptyText, { color: c.textMuted }]}>
+                  Could not load posts. Pull down to retry.
+                </Text>
+              </>
+            ) : (
+              <>
+                <Ionicons name="analytics-outline" size={48} color={c.textMuted} />
+                <Text style={[styles.emptyTitle, { color: c.textSecondary }]}>No Analysis Yet</Text>
+                <Text style={[styles.emptyText, { color: c.textMuted }]}>
+                  Free daily market analysis and key levels will appear here
+                </Text>
+              </>
+            )}
           </View>
         }
       />

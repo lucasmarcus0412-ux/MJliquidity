@@ -88,13 +88,21 @@ export default function ProMarketsScreen() {
   const memberCount = useMemo(() => new Set(messages.map(m => m.username)).size, [messages]);
 
   const loadPosts = useCallback(async () => {
-    const data = await getAnalysisPosts('four_markets');
-    setPosts(data);
+    try {
+      const data = await getAnalysisPosts('four_markets');
+      setPosts(data);
+    } catch (err) {
+      console.error('Error loading pro posts:', err);
+    }
   }, []);
 
   const loadMessages = useCallback(async () => {
-    const data = await getChatMessages('four_markets');
-    setMessages(data);
+    try {
+      const data = await getChatMessages('four_markets');
+      setMessages(data);
+    } catch (err) {
+      console.error('Error loading pro chat:', err);
+    }
   }, []);
 
   useFocusEffect(
