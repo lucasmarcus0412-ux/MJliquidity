@@ -33,7 +33,7 @@ Preferred communication style: Simple, everyday language.
 - **Build**: Server is bundled with esbuild for production (`server:build` script)
 
 ### Database — PostgreSQL with Drizzle ORM
-- **Schema**: Defined in `shared/schema.ts` — tables: `users`, `analysis_posts`, `chat_messages`, `education_posts`, `moderators`
+- **Schema**: Defined in `shared/schema.ts` — tables: `users`, `analysis_posts`, `chat_messages`, `education_posts`, `moderators`, `banned_users`
 - **ORM**: Drizzle ORM with `drizzle-zod` for validation schema generation
 - **Config**: `drizzle.config.ts` points to `DATABASE_URL` env variable, outputs migrations to `./migrations`
 - **Push**: Use `npm run db:push` to sync schema to the database
@@ -41,7 +41,8 @@ Preferred communication style: Simple, everyday language.
 
 ### Admin System
 - **Authentication**: Simple password-based admin login (hardcoded password `mjliquid2024` in `lib/AppContext.tsx`). This is client-side only — not a secure auth system
-- **Capabilities**: Admins can create/delete analysis posts, send admin-tagged chat messages, configure the subscription URL, and manage moderators
+- **Capabilities**: Admins can create/delete analysis posts, send admin-tagged chat messages, configure the subscription URL, manage moderators, and manage banned users
+- **Education Posts**: Support 3 content types — Article (text-based), Video (YouTube/link with thumbnail), PDF (link with cover image). Each post can have a title, content/description, thumbnail image, and external link
 
 ### Moderator System
 - **Assignment**: Admins assign moderators by display name via Profile > Admin > Manage Moderators modal
