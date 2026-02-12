@@ -232,6 +232,7 @@ export default function ProfileScreen() {
           </View>
           {isAdmin && (
             <Pressable
+              testID="edu-compose-btn"
               onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); setShowComposeEdu(true); }}
               style={[styles.composeBtn, { backgroundColor: c.gold }]}
             >
