@@ -122,11 +122,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/education", async (req, res) => {
     try {
-      const { title, content } = req.body;
+      const { title, content, contentType, imageData, linkUrl } = req.body;
+
+      let imageUri: string | null = null;
+      if (imageData) {
+        const matches = imageData.match(/^data:image\/(\w+);base64,(.+)$/);
+        if (matches) {
+          const ext = matches[1] === 'jpeg' ? 'jpg' : matches[1];
+          const buffer = Buffer.from(matches[2], 'base64');
+          const filename = `edu_${Date.now()}_${Math.random().toString(36).substr(2, 9)}.${ext}`;
+          const uploadsDir = path.join(process.cwd(), 'uploads');
+          if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
+          fs.writeFileSync(path.join(uploadsDir, filename), buffer);
+          imageUri = `/uploads/${filename}`;
+        }
+      }
+
       const post = await storage.createEducationPost({
         id: generateId(),
         title,
         content,
+        contentType: contentType || 'article',
+        imageUri,
+        linkUrl: linkUrl || null,
         timestamp: Date.now(),
       });
       res.json(post);

@@ -57,6 +57,9 @@ export interface EducationPost {
   id: string;
   title: string;
   content: string;
+  contentType: string;
+  imageUri: string | null;
+  linkUrl: string | null;
   timestamp: number;
 }
 
@@ -156,10 +159,13 @@ export async function getEducationPosts(): Promise<EducationPost[]> {
   }
 }
 
-export async function addEducationPost(post: Omit<EducationPost, 'id' | 'timestamp'>): Promise<EducationPost> {
+export async function addEducationPost(post: { title: string; content: string; contentType?: string; imageData?: string | null; linkUrl?: string | null }): Promise<EducationPost> {
   const res = await apiRequest('POST', '/api/education', {
     title: post.title,
     content: post.content,
+    contentType: post.contentType || 'article',
+    imageData: post.imageData || null,
+    linkUrl: post.linkUrl || null,
   });
   return await res.json();
 }
