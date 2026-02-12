@@ -35,6 +35,9 @@ export const educationPosts = pgTable("education_posts", {
   id: varchar("id").primaryKey(),
   title: text("title").notNull(),
   content: text("content").notNull(),
+  contentType: text("content_type").notNull().default("article"),
+  imageUri: text("image_uri"),
+  linkUrl: text("link_url"),
   timestamp: bigint("timestamp", { mode: "number" }).notNull(),
 });
 
