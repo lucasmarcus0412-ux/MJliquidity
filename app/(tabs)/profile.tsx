@@ -14,11 +14,13 @@ import {
   RefreshControl,
   KeyboardAvoidingView,
   Switch,
+  Image,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
+import * as ImagePicker from 'expo-image-picker';
 import * as Notifications from 'expo-notifications';
 import Colors from '@/constants/colors';
 import { useApp } from '@/lib/AppContext';
@@ -32,8 +34,24 @@ import {
   unbanUser,
 } from '@/lib/storage';
 import { useFocusEffect } from 'expo-router';
+import { getApiUrl } from '@/lib/query-client';
 
 type ActiveSection = 'main' | 'education';
+
+function resolveImageUrl(uri: string | null | undefined): string | undefined {
+  if (!uri) return undefined;
+  if (uri.startsWith('http://') || uri.startsWith('https://') || uri.startsWith('data:')) return uri;
+  if (uri.startsWith('/uploads/')) {
+    const base = getApiUrl().replace(/\/$/, '');
+    return `${base}${uri}`;
+  }
+  return uri;
+}
+
+function getYouTubeId(url: string): string | null {
+  const match = url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
+  return match ? match[1] : null;
+}
 
 const MEMBERSHIP_TIERS = [
   {
@@ -86,6 +104,10 @@ export default function ProfileScreen() {
   const [showComposeEdu, setShowComposeEdu] = useState(false);
   const [eduTitle, setEduTitle] = useState('');
   const [eduContent, setEduContent] = useState('');
+  const [eduContentType, setEduContentType] = useState<'article' | 'video' | 'pdf'>('article');
+  const [eduImageUri, setEduImageUri] = useState<string | null>(null);
+  const [eduImageBase64, setEduImageBase64] = useState<string | null>(null);
+  const [eduLinkUrl, setEduLinkUrl] = useState('');
   const [showDisclaimer, setShowDisclaimer] = useState(false);
   const [showGuidelines, setShowGuidelines] = useState(false);
   const [showPrivacyPolicy, setShowPrivacyPolicy] = useState(false);
@@ -137,14 +159,36 @@ export default function ProfileScreen() {
     }
   };
 
+  const pickEduImage = async () => {
+    const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: 'images', quality: 0.7, base64: true });
+    if (!result.canceled && result.assets[0]) {
+      setEduImageUri(result.assets[0].uri);
+      setEduImageBase64(result.assets[0].base64 ? `data:image/jpeg;base64,${result.assets[0].base64}` : null);
+    }
+  };
+
   const handlePostEdu = async () => {
-    if (!eduTitle.trim() || !eduContent.trim()) {
-      Alert.alert('Missing Info', 'Please add a title and content.');
+    if (!eduTitle.trim()) {
+      Alert.alert('Missing Info', 'Please add a title.');
       return;
     }
-    await addEducationPost({ title: eduTitle.trim(), content: eduContent.trim() });
+    if (eduContentType === 'article' && !eduContent.trim()) {
+      Alert.alert('Missing Info', 'Please add content for the article.');
+      return;
+    }
+    if ((eduContentType === 'video' || eduContentType === 'pdf') && !eduLinkUrl.trim()) {
+      Alert.alert('Missing Link', `Please add a ${eduContentType === 'video' ? 'video' : 'PDF'} link.`);
+      return;
+    }
+    await addEducationPost({
+      title: eduTitle.trim(),
+      content: eduContent.trim() || eduTitle.trim(),
+      contentType: eduContentType,
+      imageData: eduImageBase64,
+      linkUrl: eduLinkUrl.trim() || null,
+    });
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    setEduTitle(''); setEduContent(''); setShowComposeEdu(false);
+    setEduTitle(''); setEduContent(''); setEduContentType('article'); setEduImageUri(null); setEduImageBase64(null); setEduLinkUrl(''); setShowComposeEdu(false);
     await loadEducation();
   };
 
@@ -199,30 +243,72 @@ export default function ProfileScreen() {
         <FlatList
           data={educationPosts}
           keyExtractor={(item) => item.id}
-          renderItem={({ item }) => (
-            <View style={[styles.eduCard, { backgroundColor: c.card, borderColor: c.cardBorder }]}>
-              <View style={styles.eduCardHeader}>
-                <View style={[styles.eduBadge, { backgroundColor: c.goldMuted }]}>
-                  <Ionicons name="school-outline" size={14} color={c.gold} />
-                  <Text style={[styles.eduBadgeText, { color: c.gold }]}>EDUCATION</Text>
-                </View>
-                <View style={styles.eduCardHeaderRight}>
-                  <Text style={[styles.timeText, { color: c.textMuted }]}>{formatTime(item.timestamp)}</Text>
-                  {isAdmin && (
-                    <Pressable onPress={() => handleDeleteEdu(item.id)} hitSlop={12}>
-                      <Ionicons name="trash-outline" size={16} color={c.textMuted} />
-                    </Pressable>
+          renderItem={({ item }) => {
+            const resolvedImg = resolveImageUrl(item.imageUri);
+            const typeLabel = item.contentType === 'video' ? 'VIDEO' : item.contentType === 'pdf' ? 'PDF' : 'ARTICLE';
+            const typeIcon = item.contentType === 'video' ? 'videocam-outline' as const : item.contentType === 'pdf' ? 'document-text-outline' as const : 'school-outline' as const;
+            const ytId = item.contentType === 'video' && item.linkUrl ? getYouTubeId(item.linkUrl) : null;
+            const thumbUrl = ytId ? `https://img.youtube.com/vi/${ytId}/hqdefault.jpg` : resolvedImg;
+
+            return (
+              <Pressable
+                onPress={() => {
+                  if (item.linkUrl) {
+                    Linking.openURL(item.linkUrl);
+                  }
+                }}
+                style={[styles.eduCard, { backgroundColor: c.card, borderColor: c.cardBorder }]}
+              >
+                {thumbUrl && (
+                  <View style={styles.eduThumbnailWrap}>
+                    <Image source={{ uri: thumbUrl }} style={styles.eduThumbnail} resizeMode="cover" />
+                    {item.contentType === 'video' && (
+                      <View style={styles.eduPlayOverlay}>
+                        <View style={styles.eduPlayBtn}>
+                          <Ionicons name="play" size={28} color="#FFFFFF" />
+                        </View>
+                      </View>
+                    )}
+                    {item.contentType === 'pdf' && (
+                      <View style={styles.eduPdfOverlay}>
+                        <View style={styles.eduPdfBadge}>
+                          <Ionicons name="document-text" size={16} color="#FFFFFF" />
+                          <Text style={styles.eduPdfBadgeText}>PDF</Text>
+                        </View>
+                      </View>
+                    )}
+                  </View>
+                )}
+                <View style={{ padding: 14 }}>
+                  <View style={styles.eduCardHeader}>
+                    <View style={[styles.eduBadge, { backgroundColor: c.goldMuted }]}>
+                      <Ionicons name={typeIcon} size={14} color={c.gold} />
+                      <Text style={[styles.eduBadgeText, { color: c.gold }]}>{typeLabel}</Text>
+                    </View>
+                    <View style={styles.eduCardHeaderRight}>
+                      <Text style={[styles.timeText, { color: c.textMuted }]}>{formatTime(item.timestamp)}</Text>
+                      {isAdmin && (
+                        <Pressable onPress={() => handleDeleteEdu(item.id)} hitSlop={12}>
+                          <Ionicons name="trash-outline" size={16} color={c.textMuted} />
+                        </Pressable>
+                      )}
+                    </View>
+                  </View>
+                  <Text style={[styles.eduCardTitle, { color: c.text }]}>{item.title}</Text>
+                  {item.contentType === 'article' && (
+                    <Text style={[styles.eduCardContent, { color: c.textSecondary }]}>{item.content}</Text>
                   )}
+                  {item.contentType !== 'article' && item.content !== item.title && (
+                    <Text style={[styles.eduCardContent, { color: c.textSecondary }]} numberOfLines={2}>{item.content}</Text>
+                  )}
+                  <View style={styles.eduCardFooter}>
+                    <View style={[styles.adminDot, { backgroundColor: c.gold }]} />
+                    <Text style={[styles.adminLabel, { color: c.goldLight }]}>MJliquidity</Text>
+                  </View>
                 </View>
-              </View>
-              <Text style={[styles.eduCardTitle, { color: c.text }]}>{item.title}</Text>
-              <Text style={[styles.eduCardContent, { color: c.textSecondary }]}>{item.content}</Text>
-              <View style={styles.eduCardFooter}>
-                <View style={[styles.adminDot, { backgroundColor: c.gold }]} />
-                <Text style={[styles.adminLabel, { color: c.goldLight }]}>MJliquidity</Text>
-              </View>
-            </View>
-          )}
+              </Pressable>
+            );
+          }}
           contentContainerStyle={[styles.eduListContent, { paddingBottom: Platform.OS === 'web' ? 84 : 100 }]}
           showsVerticalScrollIndicator={false}
           refreshControl={
@@ -242,7 +328,7 @@ export default function ProfileScreen() {
             <View style={styles.modalOverlay}>
               <View style={[styles.composeModal, { backgroundColor: c.surface }]}>
                 <View style={styles.composeHeader}>
-                  <Pressable onPress={() => setShowComposeEdu(false)} hitSlop={12}>
+                  <Pressable onPress={() => { setShowComposeEdu(false); setEduContentType('article'); setEduImageUri(null); setEduImageBase64(null); setEduLinkUrl(''); }} hitSlop={12}>
                     <Ionicons name="close" size={24} color={c.textSecondary} />
                   </Pressable>
                   <Text style={[styles.composeTitle, { color: c.text }]}>New Education Post</Text>
@@ -250,22 +336,74 @@ export default function ProfileScreen() {
                     <Text style={[styles.postBtnText, { color: '#0A0A0A' }]}>Post</Text>
                   </Pressable>
                 </View>
-                <TextInput
-                  placeholder="Title"
-                  placeholderTextColor={c.textMuted}
-                  style={[styles.titleInput, { color: c.text, borderBottomColor: c.border }]}
-                  value={eduTitle}
-                  onChangeText={setEduTitle}
-                />
-                <TextInput
-                  placeholder="Write your educational content..."
-                  placeholderTextColor={c.textMuted}
-                  style={[styles.contentInput, { color: c.text }]}
-                  value={eduContent}
-                  onChangeText={setEduContent}
-                  multiline
-                  textAlignVertical="top"
-                />
+
+                <View style={styles.eduTypeRow}>
+                  {(['article', 'video', 'pdf'] as const).map((type) => {
+                    const selected = eduContentType === type;
+                    const icon = type === 'article' ? 'document-text-outline' as const : type === 'video' ? 'videocam-outline' as const : 'reader-outline' as const;
+                    const label = type === 'article' ? 'Article' : type === 'video' ? 'Video' : 'PDF';
+                    return (
+                      <Pressable
+                        key={type}
+                        onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setEduContentType(type); }}
+                        style={[styles.eduTypeBtn, { backgroundColor: selected ? c.gold : c.inputBackground, borderColor: selected ? c.gold : c.inputBorder }]}
+                      >
+                        <Ionicons name={icon} size={16} color={selected ? '#0A0A0A' : c.textMuted} />
+                        <Text style={[styles.eduTypeBtnText, { color: selected ? '#0A0A0A' : c.textMuted }]}>{label}</Text>
+                      </Pressable>
+                    );
+                  })}
+                </View>
+
+                <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator={false}>
+                  <TextInput
+                    placeholder="Title"
+                    placeholderTextColor={c.textMuted}
+                    style={[styles.titleInput, { color: c.text, borderBottomColor: c.border }]}
+                    value={eduTitle}
+                    onChangeText={setEduTitle}
+                  />
+
+                  {(eduContentType === 'video' || eduContentType === 'pdf') && (
+                    <TextInput
+                      placeholder={eduContentType === 'video' ? 'Paste YouTube or video link...' : 'Paste PDF link (Google Drive, Dropbox, etc.)...'}
+                      placeholderTextColor={c.textMuted}
+                      style={[styles.titleInput, { color: c.text, borderBottomColor: c.border }]}
+                      value={eduLinkUrl}
+                      onChangeText={setEduLinkUrl}
+                      autoCapitalize="none"
+                      keyboardType="url"
+                    />
+                  )}
+
+                  <Pressable onPress={pickEduImage} style={[styles.eduImagePicker, { borderColor: c.inputBorder, backgroundColor: c.inputBackground }]}>
+                    {eduImageUri ? (
+                      <View style={{ width: '100%' }}>
+                        <Image source={{ uri: eduImageUri }} style={styles.eduImagePreview} resizeMode="cover" />
+                        <Pressable onPress={() => { setEduImageUri(null); setEduImageBase64(null); }} style={styles.eduImageRemove}>
+                          <Ionicons name="close-circle" size={24} color="#FF5252" />
+                        </Pressable>
+                      </View>
+                    ) : (
+                      <View style={styles.eduImagePlaceholder}>
+                        <Ionicons name="image-outline" size={32} color={c.textMuted} />
+                        <Text style={[styles.eduImagePlaceholderText, { color: c.textMuted }]}>
+                          {eduContentType === 'video' ? 'Add custom thumbnail (optional)' : eduContentType === 'pdf' ? 'Add cover image (optional)' : 'Add image (optional)'}
+                        </Text>
+                      </View>
+                    )}
+                  </Pressable>
+
+                  <TextInput
+                    placeholder={eduContentType === 'article' ? 'Write your educational content...' : 'Add a description (optional)...'}
+                    placeholderTextColor={c.textMuted}
+                    style={[styles.contentInput, { color: c.text, minHeight: eduContentType === 'article' ? 150 : 80 }]}
+                    value={eduContent}
+                    onChangeText={setEduContent}
+                    multiline
+                    textAlignVertical="top"
+                  />
+                </ScrollView>
               </View>
             </View>
           </KeyboardAvoidingView>
@@ -917,7 +1055,22 @@ const styles = StyleSheet.create({
   loginBtn: { paddingHorizontal: 24, paddingVertical: 10, borderRadius: 12 },
   loginBtnText: { fontSize: 15, fontFamily: 'DMSans_700Bold' },
   cancelText: { fontSize: 14, fontFamily: 'DMSans_500Medium' },
-  eduCard: { borderRadius: 16, padding: 16, borderWidth: 1 },
+  eduCard: { borderRadius: 16, borderWidth: 1, overflow: 'hidden' as const },
+  eduThumbnailWrap: { width: '100%' as const, height: 180, position: 'relative' as const },
+  eduThumbnail: { width: '100%' as const, height: '100%' as const },
+  eduPlayOverlay: { ...StyleSheet.absoluteFillObject, justifyContent: 'center' as const, alignItems: 'center' as const, backgroundColor: 'rgba(0,0,0,0.35)' },
+  eduPlayBtn: { width: 56, height: 56, borderRadius: 28, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'center' as const, alignItems: 'center' as const, paddingLeft: 4 },
+  eduPdfOverlay: { position: 'absolute' as const, bottom: 8, right: 8 },
+  eduPdfBadge: { flexDirection: 'row' as const, alignItems: 'center' as const, gap: 4, paddingHorizontal: 10, paddingVertical: 5, borderRadius: 8, backgroundColor: 'rgba(0,0,0,0.7)' },
+  eduPdfBadgeText: { fontSize: 12, fontFamily: 'DMSans_700Bold', color: '#FFFFFF' },
+  eduTypeRow: { flexDirection: 'row' as const, gap: 8, marginBottom: 16 },
+  eduTypeBtn: { flex: 1, flexDirection: 'row' as const, alignItems: 'center' as const, justifyContent: 'center' as const, gap: 6, paddingVertical: 10, borderRadius: 12, borderWidth: 1 },
+  eduTypeBtnText: { fontSize: 13, fontFamily: 'DMSans_600SemiBold' },
+  eduImagePicker: { borderRadius: 12, borderWidth: 1, borderStyle: 'dashed' as const, overflow: 'hidden' as const, marginBottom: 12 },
+  eduImagePreview: { width: '100%' as const, height: 180, borderRadius: 12 },
+  eduImageRemove: { position: 'absolute' as const, top: 8, right: 8 },
+  eduImagePlaceholder: { alignItems: 'center' as const, justifyContent: 'center' as const, paddingVertical: 28, gap: 6 },
+  eduImagePlaceholderText: { fontSize: 13, fontFamily: 'DMSans_400Regular' },
   eduCardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
   eduCardHeaderRight: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   eduBadge: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8 },
