@@ -35,6 +35,8 @@ import {
 } from '@/lib/storage';
 import { useFocusEffect } from 'expo-router';
 import { getApiUrl } from '@/lib/query-client';
+import { getOfferings, purchasePackage, PRODUCT_IDS } from '@/lib/revenuecat';
+import type { PurchasesPackage } from 'react-native-purchases';
 
 type ActiveSection = 'main' | 'education';
 
@@ -55,20 +57,23 @@ function getYouTubeId(url: string): string | null {
 
 const MEMBERSHIP_TIERS = [
   {
-    name: 'Gold VIP',
-    price: '75',
+    name: 'Gold Intraday VIP',
+    price: '74.99',
+    productId: 'mjliquidity.vip.monthly',
     description: 'Full Gold market analysis',
     features: ['XAUUSD liquidity zones & reaction areas', 'Daily scenario mapping', 'Members-only Gold chat'],
   },
   {
-    name: 'Pro (4 Markets)',
-    price: '75',
+    name: '4 Markets Session Analysis',
+    price: '74.99',
+    productId: 'mjliquidity.analysis.monthly',
     description: 'Multi-asset coverage',
     features: ['NQ, ES, BTC, XAU analysis', 'Consolidated market analysis', 'Members-only Pro chat'],
   },
   {
-    name: 'All Access',
-    price: '99',
+    name: 'Full Access – Gold + 4 Markets',
+    price: '99.99',
+    productId: 'mjliquidity.bundle.monthly',
     description: 'Everything unlocked',
     features: ['Gold VIP + 4 Markets', 'All premium content', 'All members-only chats'],
     isBestValue: true,
@@ -91,7 +96,7 @@ function formatTime(ts: number): string {
 export default function ProfileScreen() {
   const c = Colors.dark;
   const insets = useSafeAreaInsets();
-  const { isAdmin, isModerator, userName, subscriptionUrl, loginAdmin, logoutAdmin, setUserNameValue, moderators, addModeratorByName, removeModeratorById, isSubscribed, notificationPrefs, setNotificationPref } = useApp();
+  const { isAdmin, isModerator, userName, subscriptionUrl, loginAdmin, logoutAdmin, setUserNameValue, moderators, addModeratorByName, removeModeratorById, isSubscribed, refreshSubscriptionStatus, restorePurchases, notificationPrefs, setNotificationPref } = useApp();
 
   const scrollRef = useRef<ScrollView>(null);
   const [activeSection, setActiveSection] = useState<ActiveSection>('main');
@@ -115,14 +120,28 @@ export default function ProfileScreen() {
   const [modNameInput, setModNameInput] = useState('');
   const [showBanManager, setShowBanManager] = useState(false);
   const [bannedUsers, setBannedUsers] = useState<BannedUser[]>([]);
+  const [availablePackages, setAvailablePackages] = useState<PurchasesPackage[]>([]);
+  const [purchasing, setPurchasing] = useState(false);
+  const [restoring, setRestoring] = useState(false);
 
   const loadEducation = useCallback(async () => {
     const data = await getEducationPosts();
     setEducationPosts(data);
   }, []);
 
+  const loadOfferings = useCallback(async () => {
+    if (Platform.OS === 'ios' || Platform.OS === 'android') {
+      const packages = await getOfferings();
+      setAvailablePackages(packages);
+    }
+  }, []);
+
   useFocusEffect(
-    useCallback(() => { loadEducation(); }, [loadEducation])
+    useCallback(() => {
+      loadEducation();
+      loadOfferings();
+      refreshSubscriptionStatus();
+    }, [loadEducation, loadOfferings, refreshSubscriptionStatus])
   );
 
   const handleLogin = () => {
@@ -150,12 +169,57 @@ export default function ProfileScreen() {
     }
   };
 
-  const handleSubscribe = () => {
+  const handleSubscribe = async (productId: string) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    if (subscriptionUrl) {
-      Linking.openURL(subscriptionUrl).catch(() => Alert.alert('Error', 'Could not open link.'));
-    } else {
-      Alert.alert('Coming Soon', 'Subscription payment links will be available soon. Stay tuned!');
+
+    if (Platform.OS === 'web') {
+      if (subscriptionUrl) {
+        Linking.openURL(subscriptionUrl).catch(() => Alert.alert('Error', 'Could not open link.'));
+      } else {
+        Alert.alert('Download the App', 'In-app subscriptions are available through the iOS app. Download MJliquidity from the App Store to subscribe.');
+      }
+      return;
+    }
+
+    const pkg = availablePackages.find(
+      (p) => p.product.identifier === productId
+    );
+
+    if (!pkg) {
+      Alert.alert('Not Available', 'This subscription is not available yet. Please try again later.');
+      return;
+    }
+
+    setPurchasing(true);
+    try {
+      const customerInfo = await purchasePackage(pkg);
+      if (customerInfo) {
+        await refreshSubscriptionStatus();
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        Alert.alert('Success', 'Your subscription is now active. Enjoy your premium content!');
+      }
+    } catch (error: any) {
+      Alert.alert('Purchase Failed', error?.message || 'Something went wrong. Please try again.');
+    } finally {
+      setPurchasing(false);
+    }
+  };
+
+  const handleRestore = async () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    setRestoring(true);
+    try {
+      const restored = await restorePurchases();
+      if (restored) {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        Alert.alert('Restored', 'Your subscriptions have been restored successfully.');
+      } else {
+        Alert.alert('No Purchases Found', 'No previous subscriptions were found for this account.');
+      }
+    } catch (error) {
+      Alert.alert('Error', 'Could not restore purchases. Please try again.');
+    } finally {
+      setRestoring(false);
     }
   };
 
@@ -446,10 +510,24 @@ export default function ProfileScreen() {
 
         <Text style={[styles.sectionLabel, { color: c.textMuted }]}>SUBSCRIPTIONS</Text>
         <View style={[styles.sectionCard, { backgroundColor: c.card, borderColor: c.cardBorder }]}>
+          {isSubscribed && (
+            <>
+              <View style={styles.settingsRow}>
+                <View style={styles.settingsRowLeft}>
+                  <Ionicons name="checkmark-circle" size={20} color={c.success} />
+                  <View>
+                    <Text style={[styles.settingsLabel, { color: c.success }]}>Active Subscription</Text>
+                    <Text style={[styles.settingsValue, { color: c.textMuted }]}>You have premium access</Text>
+                  </View>
+                </View>
+              </View>
+              <View style={[styles.divider, { backgroundColor: c.border }]} />
+            </>
+          )}
           {MEMBERSHIP_TIERS.map((tier, i) => (
             <React.Fragment key={i}>
               {i > 0 && <View style={[styles.divider, { backgroundColor: c.border }]} />}
-              <Pressable onPress={handleSubscribe} style={styles.settingsRow}>
+              <Pressable onPress={() => handleSubscribe(tier.productId)} disabled={purchasing} style={styles.settingsRow}>
                 <View style={styles.settingsRowLeft}>
                   <Ionicons name={tier.isBestValue ? 'star' : 'diamond-outline'} size={20} color={tier.isBestValue ? c.gold : c.textSecondary} />
                   <View>
@@ -461,6 +539,17 @@ export default function ProfileScreen() {
               </Pressable>
             </React.Fragment>
           ))}
+          <View style={[styles.divider, { backgroundColor: c.border }]} />
+          <Pressable onPress={handleRestore} disabled={restoring} style={styles.settingsRow}>
+            <View style={styles.settingsRowLeft}>
+              <Ionicons name="refresh-outline" size={20} color={c.textSecondary} />
+              <View>
+                <Text style={[styles.settingsLabel, { color: c.text }]}>Restore Purchases</Text>
+                <Text style={[styles.settingsValue, { color: c.textMuted }]}>{restoring ? 'Restoring...' : 'Already subscribed? Restore here'}</Text>
+              </View>
+            </View>
+            <Ionicons name="chevron-forward" size={18} color={c.textMuted} />
+          </Pressable>
         </View>
 
         <Text style={[styles.sectionLabel, { color: c.textMuted }]}>LEARN</Text>
