@@ -272,7 +272,7 @@ export default function ProMarketsScreen() {
           <View>
             <View style={styles.titleRow}>
               <Ionicons name="bar-chart" size={20} color={c.gold} />
-              <Text style={[styles.headerTitle, { color: c.gold }]}>Pro Markets</Text>
+              <Text style={[styles.headerTitle, { color: c.gold }]}>4 Markets</Text>
             </View>
             <Text style={[styles.headerSubtitle, { color: c.textMuted }]}>NQ  |  ES  |  BTC  |  XAU</Text>
           </View>
@@ -282,7 +282,7 @@ export default function ProMarketsScreen() {
           <View style={[styles.paywallIconCircle, { backgroundColor: c.goldMuted }]}>
             <Ionicons name="lock-closed" size={32} color={c.gold} />
           </View>
-          <Text style={[styles.paywallTitle, { color: c.text }]}>Pro Markets Access</Text>
+          <Text style={[styles.paywallTitle, { color: c.text }]}>4 Markets Access</Text>
           <Text style={[styles.paywallSubtitle, { color: c.textSecondary }]}>
             Unlock multi-asset analysis and members-only chat
           </Text>
@@ -313,7 +313,7 @@ export default function ProMarketsScreen() {
         <View>
           <View style={styles.titleRow}>
             <Ionicons name="bar-chart" size={20} color={c.gold} />
-            <Text style={[styles.headerTitle, { color: c.gold }]}>Pro Markets</Text>
+            <Text style={[styles.headerTitle, { color: c.gold }]}>4 Markets</Text>
           </View>
           <Text style={[styles.headerSubtitle, { color: c.textMuted }]}>NQ  |  ES  |  BTC  |  XAU</Text>
         </View>
@@ -391,7 +391,7 @@ export default function ProMarketsScreen() {
           ListEmptyComponent={
             <View style={styles.emptyState}>
               <Ionicons name="lock-closed-outline" size={48} color={c.textMuted} />
-              <Text style={[styles.emptyTitle, { color: c.textSecondary }]}>Pro Markets Content</Text>
+              <Text style={[styles.emptyTitle, { color: c.textSecondary }]}>4 Markets Content</Text>
               <Text style={[styles.emptyText, { color: c.textMuted }]}>
                 Subscribe to unlock multi-asset market analysis
               </Text>
@@ -528,7 +528,7 @@ export default function ProMarketsScreen() {
                 <Pressable onPress={() => setShowCompose(false)} hitSlop={12}>
                   <Ionicons name="close" size={24} color={c.textSecondary} />
                 </Pressable>
-                <Text style={[styles.composeTitle, { color: c.text }]}>Pro Markets Analysis</Text>
+                <Text style={[styles.composeTitle, { color: c.text }]}>4 Markets Analysis</Text>
                 <Pressable onPress={handlePost} disabled={isPosting} style={[styles.postBtn, { backgroundColor: c.gold, opacity: isPosting ? 0.5 : 1 }]}>
                   <Text style={[styles.postBtnText, { color: '#0A0A0A' }]}>{isPosting ? 'Posting...' : 'Post'}</Text>
                 </Pressable>

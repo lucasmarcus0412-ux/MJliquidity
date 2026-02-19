@@ -21,7 +21,7 @@ function NativeTabLayout() {
       </NativeTabs.Trigger>
       <NativeTabs.Trigger name="pro-markets">
         <Icon sf={{ default: "chart.bar", selected: "chart.bar.fill" }} />
-        <Label>Pro</Label>
+        <Label>4 Markets</Label>
       </NativeTabs.Trigger>
       <NativeTabs.Trigger name="trading-hub">
         <Icon sf={{ default: "link", selected: "link" }} />
@@ -93,7 +93,7 @@ function ClassicTabLayout() {
       <Tabs.Screen
         name="pro-markets"
         options={{
-          title: "Pro",
+          title: "4 Markets",
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="bar-chart-outline" size={size} color={color} />
           ),
