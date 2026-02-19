@@ -68,18 +68,33 @@ Preferred communication style: Simple, everyday language.
 ### Database
 - **PostgreSQL** — Connected via `DATABASE_URL` environment variable. Used with Drizzle ORM for schema management and queries
 
+### RevenueCat — In-App Subscriptions
+- **SDK**: `react-native-purchases` integrated via `lib/revenuecat.ts`
+- **Initialization**: Configured in `lib/AppContext.tsx` on iOS/Android only (runs in Preview API Mode in Expo Go)
+- **Subscription Tiers**:
+  - Gold Intraday VIP (£74.99/mo) — Product ID: `mjliquidity.vip.monthly`, Entitlement: `gold_vip`
+  - 4 Markets Session Analysis (£74.99/mo) — Product ID: `mjliquidity.analysis.monthly`, Entitlement: `4 Markets`
+  - Full Access – Gold + 4 Markets (£99.99/mo) — Product ID: `mjliquidity.bundle.monthly`, Entitlement: `Full Access`
+- **Entitlement Checks**: `checkEntitlements()` in `lib/revenuecat.ts` maps entitlements to access flags (hasGold, hasFourMarkets, hasFullAccess)
+- **Purchase Flow**: Profile screen fetches offerings from RevenueCat, triggers native purchase sheet via `purchasePackage()`
+- **Restore Purchases**: Available on Profile screen for users who need to restore previous subscriptions
+- **Web Fallback**: On web, subscription taps show a message to download the iOS app
+
 ### Key Libraries
 - **Expo SDK 54** — Core mobile framework with router, splash screen, haptics, image picker, location, linear gradient, blur effects
 - **Express 5** — Backend HTTP server
 - **Drizzle ORM + drizzle-zod** — Database ORM and validation
 - **TanStack React Query** — Server state management and data fetching
 - **AsyncStorage** — Client-side persistent storage
+- **react-native-purchases** — RevenueCat SDK for in-app subscriptions
 - **React Native Reanimated / Gesture Handler / Screens** — Native navigation and animation primitives
 - **http-proxy-middleware** — Dev server proxying for Expo/Express integration on Replit
 
 ### Environment Variables
 - `DATABASE_URL` — PostgreSQL connection string (required for database operations)
 - `EXPO_PUBLIC_DOMAIN` — Public domain for API requests from the client
+- `EXPO_PUBLIC_REVENUECAT_APPLE_API_KEY` — RevenueCat Apple API key for in-app purchases
+- `REVENUECAT_APPLE_API_KEY` — RevenueCat Apple API key (secret)
 - `REPLIT_DEV_DOMAIN` — Replit development domain (used for CORS and Expo proxy)
 - `REPLIT_DOMAINS` — Comma-separated list of allowed CORS origins
 - `REPLIT_INTERNAL_APP_DOMAIN` — Used during deployment builds for domain resolution
