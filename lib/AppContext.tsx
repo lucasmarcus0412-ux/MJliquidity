@@ -1,4 +1,5 @@
-import React, { createContext, useContext, useState, useEffect, useMemo, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, useMemo, useCallback, ReactNode } from 'react';
+import { Platform } from 'react-native';
 import {
   getAdminStatus,
   setAdminStatus as storeAdminStatus,
@@ -24,6 +25,12 @@ import {
   getNotificationPreferences,
   setNotificationPreference as storeNotificationPreference,
 } from './storage';
+import {
+  initRevenueCat,
+  getCustomerInfo,
+  checkEntitlements,
+  restorePurchases as rcRestorePurchases,
+} from './revenuecat';
 
 interface AppContextValue {
   isAdmin: boolean;
@@ -46,6 +53,8 @@ interface AppContextValue {
   addModeratorByName: (username: string) => Promise<void>;
   removeModeratorById: (id: string) => Promise<void>;
   refreshModerators: () => Promise<void>;
+  refreshSubscriptionStatus: () => Promise<void>;
+  restorePurchases: () => Promise<boolean>;
   notificationPrefs: NotificationPreferences;
   setNotificationPref: (key: 'analysis' | 'chat', enabled: boolean) => Promise<void>;
 }
@@ -63,6 +72,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [hasSeenWelcome, setHasSeenWelcome] = useState(true);
   const [moderators, setModerators] = useState<Moderator[]>([]);
   const [subscriptionTier, setSubscriptionTierState] = useState<SubscriptionTier>('none');
+  const [rcHasGold, setRcHasGold] = useState(false);
+  const [rcHasPro, setRcHasPro] = useState(false);
+  const [rcIsSubscribed, setRcIsSubscribed] = useState(false);
   const [notificationPrefs, setNotificationPrefs] = useState<NotificationPreferences>({ analysis: false, chat: false });
 
   useEffect(() => {
@@ -76,6 +88,18 @@ export function AppProvider({ children }: { children: ReactNode }) {
       setIsModerator(false);
     }
   }, [userName, moderators]);
+
+  const refreshSubscriptionStatus = useCallback(async () => {
+    try {
+      const customerInfo = await getCustomerInfo();
+      const entitlements = checkEntitlements(customerInfo);
+      setRcHasGold(entitlements.hasGold);
+      setRcHasPro(entitlements.hasFourMarkets);
+      setRcIsSubscribed(entitlements.isSubscribed);
+    } catch (error) {
+      console.log('Could not refresh subscription status:', error);
+    }
+  }, []);
 
   async function loadState() {
     const [admin, name, subUrl, seenWelcome, mods, subTier, notifPrefs] = await Promise.all([
@@ -94,6 +118,20 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setModerators(mods);
     setSubscriptionTierState(subTier);
     setNotificationPrefs(notifPrefs);
+
+    if (Platform.OS === 'ios' || Platform.OS === 'android') {
+      try {
+        await initRevenueCat();
+        const customerInfo = await getCustomerInfo();
+        const entitlements = checkEntitlements(customerInfo);
+        setRcHasGold(entitlements.hasGold);
+        setRcHasPro(entitlements.hasFourMarkets);
+        setRcIsSubscribed(entitlements.isSubscribed);
+      } catch (error) {
+        console.log('RevenueCat init (Expo Go preview mode):', error);
+      }
+    }
+
     setIsLoading(false);
   }
 
@@ -151,9 +189,26 @@ export function AppProvider({ children }: { children: ReactNode }) {
     await storeNotificationPreference(key, enabled);
   }
 
-  const canAccessGold = isAdmin || hasGoldAccess(subscriptionTier);
-  const canAccessPro = isAdmin || hasProAccess(subscriptionTier);
-  const isSubscribed = isAdmin || hasAnySubscription(subscriptionTier);
+  async function restorePurchases(): Promise<boolean> {
+    try {
+      const customerInfo = await rcRestorePurchases();
+      if (customerInfo) {
+        const entitlements = checkEntitlements(customerInfo);
+        setRcHasGold(entitlements.hasGold);
+        setRcHasPro(entitlements.hasFourMarkets);
+        setRcIsSubscribed(entitlements.isSubscribed);
+        return entitlements.isSubscribed;
+      }
+      return false;
+    } catch (error) {
+      console.log('Restore purchases error:', error);
+      return false;
+    }
+  }
+
+  const canAccessGold = isAdmin || rcHasGold || hasGoldAccess(subscriptionTier);
+  const canAccessPro = isAdmin || rcHasPro || hasProAccess(subscriptionTier);
+  const isSubscribed = isAdmin || rcIsSubscribed || hasAnySubscription(subscriptionTier);
 
   const value = useMemo(() => ({
     isAdmin,
@@ -176,9 +231,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
     addModeratorByName,
     removeModeratorById,
     refreshModerators,
+    refreshSubscriptionStatus,
+    restorePurchases,
     notificationPrefs,
     setNotificationPref,
-  }), [isAdmin, isModerator, userName, subscriptionUrl, isLoading, hasSeenWelcome, moderators, subscriptionTier, canAccessGold, canAccessPro, isSubscribed, notificationPrefs]);
+  }), [isAdmin, isModerator, userName, subscriptionUrl, isLoading, hasSeenWelcome, moderators, subscriptionTier, canAccessGold, canAccessPro, isSubscribed, rcHasGold, rcHasPro, rcIsSubscribed, notificationPrefs, refreshSubscriptionStatus]);
 
   return (
     <AppContext.Provider value={value}>
