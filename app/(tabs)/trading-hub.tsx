@@ -34,6 +34,11 @@ const BROKERS = [
     description: 'Award-winning CFD broker',
     url: 'https://vigco.co/la-com/IqU5ltdv',
   },
+  {
+    name: 'MYFX Markets',
+    description: 'Global forex & CFD broker',
+    url: 'https://myfxmarkets.com/?ibCode=5002140',
+  },
 ];
 
 const COPY_TRADING = [
