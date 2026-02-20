@@ -1,8 +1,6 @@
 import type { Express } from "express";
 import { createServer, type Server } from "node:http";
 import { storage } from "./storage";
-import * as fs from "fs";
-import * as path from "path";
 
 function generateId(): string {
   return Date.now().toString() + Math.random().toString(36).substr(2, 9);
@@ -126,16 +124,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       let imageUri: string | null = null;
       if (imageData) {
-        const matches = imageData.match(/^data:image\/(\w+);base64,(.+)$/);
-        if (matches) {
-          const ext = matches[1] === 'jpeg' ? 'jpg' : matches[1];
-          const buffer = Buffer.from(matches[2], 'base64');
-          const filename = `edu_${Date.now()}_${Math.random().toString(36).substr(2, 9)}.${ext}`;
-          const uploadsDir = path.join(process.cwd(), 'uploads');
-          if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
-          fs.writeFileSync(path.join(uploadsDir, filename), buffer);
-          imageUri = `/uploads/${filename}`;
-        }
+        imageUri = imageData.startsWith("data:") ? imageData : `data:image/jpeg;base64,${imageData}`;
       }
 
       const post = await storage.createEducationPost({
@@ -253,20 +242,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "No image data provided" });
       }
 
-      const uploadsDir = path.resolve(process.cwd(), "uploads");
-      if (!fs.existsSync(uploadsDir)) {
-        fs.mkdirSync(uploadsDir, { recursive: true });
+      const mime = mimeType || "image/jpeg";
+      let dataUri = imageData;
+      if (!dataUri.startsWith("data:")) {
+        dataUri = `data:${mime};base64,${imageData}`;
       }
 
-      const ext = (mimeType || "image/jpeg").split("/")[1] || "jpg";
-      const filename = `${generateId()}.${ext}`;
-      const filePath = path.join(uploadsDir, filename);
-
-      const base64Data = imageData.replace(/^data:image\/\w+;base64,/, "");
-      fs.writeFileSync(filePath, Buffer.from(base64Data, "base64"));
-
-      const imageUrl = `/uploads/${filename}`;
-      res.json({ url: imageUrl });
+      res.json({ url: dataUri });
     } catch (err) {
       console.error("Error uploading image:", err);
       res.status(500).json({ error: "Failed to upload image" });
