@@ -287,7 +287,7 @@ export default function ProMarketsScreen() {
             Unlock multi-asset analysis and members-only chat
           </Text>
           <View style={styles.paywallFeatures}>
-            {['NQ, ES, BTC, XAU analysis', 'Consolidated market analysis', 'Members-only Pro chat'].map((f, i) => (
+            {['NQ, ES, BTC, XAU analysis', 'Consolidated market analysis', 'Members-only 4 Markets chat'].map((f, i) => (
               <View key={i} style={styles.paywallFeatureRow}>
                 <Ionicons name="checkmark-circle" size={18} color={c.gold} />
                 <Text style={[styles.paywallFeatureText, { color: c.textSecondary }]}>{f}</Text>
@@ -457,7 +457,7 @@ export default function ProMarketsScreen() {
             ListEmptyComponent={
               <View style={styles.emptyState}>
                 <Ionicons name="chatbubbles-outline" size={48} color={c.textMuted} />
-                <Text style={[styles.emptyTitle, { color: c.textSecondary }]}>Pro Members Chat</Text>
+                <Text style={[styles.emptyTitle, { color: c.textSecondary }]}>4 Markets Members Chat</Text>
                 <Text style={[styles.emptyText, { color: c.textMuted }]}>Members-only discussion</Text>
               </View>
             }
