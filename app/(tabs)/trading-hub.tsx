@@ -21,11 +21,6 @@ const PROP_FIRMS = [
     discount: 'VIP20',
     url: 'https://mj-markets.com',
   },
-  {
-    name: 'Top One Trader',
-    description: 'Funded trading challenges',
-    url: 'https://toponetrader.com/guide/?linkId=lp_243488&sourceId=mjliquidity&tenantId=toponetrader',
-  },
 ];
 
 const BROKERS = [
