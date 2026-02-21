@@ -250,7 +250,7 @@ export default function HomeScreen() {
                 <Ionicons name="diamond" size={20} color={c.gold} />
                 <View>
                   <Text style={[styles.vipBannerTitle, { color: c.gold }]}>Unlock VIP Analysis</Text>
-                  <Text style={[styles.vipBannerSub, { color: c.textSecondary }]}>Gold & Pro members get exclusive features</Text>
+                  <Text style={[styles.vipBannerSub, { color: c.textSecondary }]}>Gold & 4 Markets members get exclusive features</Text>
                 </View>
               </View>
               <Ionicons name="chevron-forward" size={18} color={c.gold} />
