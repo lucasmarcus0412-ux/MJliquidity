@@ -78,3 +78,4 @@ ensurePreviewReachable = "/status"
 
 [userenv.shared]
 EXPO_PUBLIC_REVENUECAT_APPLE_API_KEY = "appl_UgHvSkYPHxFiJdVoRzQPxPxSCma"
+EXPO_PUBLIC_REVENUECAT_GOOGLE_API_KEY = "goog_kXDrxehLZzMIkzSyXuvRgTphNGX"

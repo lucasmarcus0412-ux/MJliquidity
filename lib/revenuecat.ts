@@ -1,7 +1,13 @@
 import { Platform } from 'react-native';
 import Purchases, { LOG_LEVEL, CustomerInfo, PurchasesPackage } from 'react-native-purchases';
 
-const REVENUECAT_API_KEY = process.env.EXPO_PUBLIC_REVENUECAT_APPLE_API_KEY || '';
+const APPLE_API_KEY = process.env.EXPO_PUBLIC_REVENUECAT_APPLE_API_KEY || '';
+const GOOGLE_API_KEY = process.env.EXPO_PUBLIC_REVENUECAT_GOOGLE_API_KEY || '';
+
+function getApiKey(): string {
+  if (Platform.OS === 'android') return GOOGLE_API_KEY;
+  return APPLE_API_KEY;
+}
 
 export const ENTITLEMENT_IDS = {
   GOLD_VIP: 'gold_vip',
@@ -22,8 +28,9 @@ export async function initRevenueCat(): Promise<void> {
 
   if (Platform.OS === 'web') return;
 
-  if (!REVENUECAT_API_KEY) {
-    console.log('RevenueCat: No API key configured, skipping init');
+  const apiKey = getApiKey();
+  if (!apiKey) {
+    console.log('RevenueCat: No API key configured for', Platform.OS, '- skipping init');
     return;
   }
 
@@ -32,7 +39,7 @@ export async function initRevenueCat(): Promise<void> {
       Purchases.setLogLevel(LOG_LEVEL.VERBOSE);
     }
 
-    Purchases.configure({ apiKey: REVENUECAT_API_KEY });
+    Purchases.configure({ apiKey });
     isConfigured = true;
   } catch (error: any) {
     const msg = error?.message || '';
