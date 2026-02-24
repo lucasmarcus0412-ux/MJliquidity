@@ -20,17 +20,27 @@ let isConfigured = false;
 export async function initRevenueCat(): Promise<void> {
   if (isConfigured) return;
 
+  if (Platform.OS === 'web') return;
+
+  if (!REVENUECAT_API_KEY) {
+    console.log('RevenueCat: No API key configured, skipping init');
+    return;
+  }
+
   try {
     if (__DEV__) {
       Purchases.setLogLevel(LOG_LEVEL.VERBOSE);
     }
 
-    if (Platform.OS === 'ios' || Platform.OS === 'android') {
-      Purchases.configure({ apiKey: REVENUECAT_API_KEY });
-      isConfigured = true;
+    Purchases.configure({ apiKey: REVENUECAT_API_KEY });
+    isConfigured = true;
+  } catch (error: any) {
+    const msg = error?.message || '';
+    if (msg.includes('Expo Go') || msg.includes('Invalid API key') || msg.includes('native store')) {
+      console.log('RevenueCat: Running in Expo Go preview mode — subscriptions disabled');
+    } else {
+      console.log('RevenueCat init error:', msg);
     }
-  } catch (error) {
-    console.log('RevenueCat init (preview mode in Expo Go):', error);
   }
 }
 
