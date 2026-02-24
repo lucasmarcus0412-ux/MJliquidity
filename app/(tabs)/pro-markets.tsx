@@ -258,12 +258,44 @@ export default function ProMarketsScreen() {
 
   const handleSubscribe = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    if (subscriptionUrl) {
-      Linking.openURL(subscriptionUrl).catch(() => Alert.alert('Error', 'Could not open link.'));
-    } else {
-      Alert.alert('Subscribe', 'Visit the Profile tab to view subscription plans and get access.');
+    if (Platform.OS === 'web') {
+      if (subscriptionUrl) {
+        Linking.openURL(subscriptionUrl).catch(() => Alert.alert('Error', 'Could not open link.'));
+      } else {
+        Alert.alert('Download the App', 'In-app subscriptions are available through the iOS app. Download MJliquidity from the App Store to subscribe.');
+      }
+      return;
     }
+    const { purchaseFromPaywall } = require('@/lib/revenuecat');
+    purchaseFromPaywall('mjliquidity.analysis.monthly').catch(() => {
+      Alert.alert('Subscribe', 'Visit the Profile tab to view subscription plans and get access.');
+    });
   };
+
+  const renderPaywall = () => (
+    <View style={styles.paywallContainer}>
+      <LinearGradient colors={['rgba(201, 168, 76, 0.12)', 'rgba(201, 168, 76, 0.03)', 'transparent']} style={styles.paywallGlow} />
+      <View style={[styles.paywallIconCircle, { backgroundColor: c.goldMuted }]}>
+        <Ionicons name="lock-closed" size={32} color={c.gold} />
+      </View>
+      <Text style={[styles.paywallTitle, { color: c.text }]}>4 Markets Access</Text>
+      <Text style={[styles.paywallSubtitle, { color: c.textSecondary }]}>
+        Unlock multi-asset analysis and members-only chat
+      </Text>
+      <View style={styles.paywallFeatures}>
+        {['NQ, ES, BTC, XAU analysis', 'Consolidated market analysis', 'Members-only 4 Markets chat'].map((f, i) => (
+          <View key={i} style={styles.paywallFeatureRow}>
+            <Ionicons name="checkmark-circle" size={18} color={c.gold} />
+            <Text style={[styles.paywallFeatureText, { color: c.textSecondary }]}>{f}</Text>
+          </View>
+        ))}
+      </View>
+      <Pressable onPress={handleSubscribe} style={[styles.paywallBtn, { backgroundColor: c.gold }]}>
+        <Text style={styles.paywallBtnText}>Subscribe Now</Text>
+      </Pressable>
+      <Text style={[styles.paywallPrice, { color: c.textMuted }]}>From £75/month</Text>
+    </View>
+  );
 
   if (!canAccessPro) {
     return (
@@ -277,28 +309,23 @@ export default function ProMarketsScreen() {
             <Text style={[styles.headerSubtitle, { color: c.textMuted }]}>NQ  |  ES  |  BTC  |  XAU</Text>
           </View>
         </View>
-        <View style={styles.paywallContainer}>
-          <LinearGradient colors={['rgba(201, 168, 76, 0.12)', 'rgba(201, 168, 76, 0.03)', 'transparent']} style={styles.paywallGlow} />
-          <View style={[styles.paywallIconCircle, { backgroundColor: c.goldMuted }]}>
-            <Ionicons name="lock-closed" size={32} color={c.gold} />
-          </View>
-          <Text style={[styles.paywallTitle, { color: c.text }]}>4 Markets Access</Text>
-          <Text style={[styles.paywallSubtitle, { color: c.textSecondary }]}>
-            Unlock multi-asset analysis and members-only chat
-          </Text>
-          <View style={styles.paywallFeatures}>
-            {['NQ, ES, BTC, XAU analysis', 'Consolidated market analysis', 'Members-only 4 Markets chat'].map((f, i) => (
-              <View key={i} style={styles.paywallFeatureRow}>
-                <Ionicons name="checkmark-circle" size={18} color={c.gold} />
-                <Text style={[styles.paywallFeatureText, { color: c.textSecondary }]}>{f}</Text>
-              </View>
-            ))}
-          </View>
-          <Pressable onPress={handleSubscribe} style={[styles.paywallBtn, { backgroundColor: c.gold }]}>
-            <Text style={styles.paywallBtnText}>Subscribe Now</Text>
-          </Pressable>
-          <Text style={[styles.paywallPrice, { color: c.textMuted }]}>From £75/month</Text>
+
+        <View style={styles.tabRow}>
+          {(['analysis', 'chat'] as const).map((tab) => (
+            <Pressable
+              key={tab}
+              onPress={() => { Haptics.selectionAsync(); setActiveTab(tab); }}
+              style={[styles.tabBtn, activeTab === tab && { borderBottomColor: c.gold, borderBottomWidth: 2 }]}
+            >
+              <Ionicons name={tab === 'analysis' ? 'analytics-outline' : 'chatbubble-outline'} size={16} color={activeTab === tab ? c.gold : c.textMuted} />
+              <Text style={[styles.tabText, { color: activeTab === tab ? c.gold : c.textMuted }]}>
+                {tab === 'analysis' ? 'Analysis' : 'Chat'}
+              </Text>
+            </Pressable>
+          ))}
         </View>
+
+        {renderPaywall()}
       </View>
     );
   }
@@ -390,10 +417,10 @@ export default function ProMarketsScreen() {
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={c.gold} />}
           ListEmptyComponent={
             <View style={styles.emptyState}>
-              <Ionicons name="lock-closed-outline" size={48} color={c.textMuted} />
-              <Text style={[styles.emptyTitle, { color: c.textSecondary }]}>4 Markets Content</Text>
+              <Ionicons name="bar-chart-outline" size={48} color={c.textMuted} />
+              <Text style={[styles.emptyTitle, { color: c.textSecondary }]}>No Analysis Yet</Text>
               <Text style={[styles.emptyText, { color: c.textMuted }]}>
-                Subscribe to unlock multi-asset market analysis
+                New market analysis will appear here
               </Text>
             </View>
           }

@@ -87,6 +87,15 @@ export async function purchasePackage(pkg: PurchasesPackage): Promise<CustomerIn
   }
 }
 
+export async function purchaseFromPaywall(productId: string): Promise<CustomerInfo | null> {
+  const offerings = await getOfferings();
+  const pkg = offerings.find((p) => p.product.identifier === productId);
+  if (!pkg) {
+    throw new Error('Subscription not available');
+  }
+  return purchasePackage(pkg);
+}
+
 export async function restorePurchases(): Promise<CustomerInfo | null> {
   try {
     const customerInfo = await Purchases.restorePurchases();
