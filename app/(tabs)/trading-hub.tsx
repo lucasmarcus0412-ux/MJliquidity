@@ -21,6 +21,11 @@ const PROP_FIRMS = [
     discount: 'VIP20',
     url: 'https://mj-markets.com',
   },
+  {
+    name: 'Hantec Trader',
+    description: 'Funded trading challenges',
+    url: 'https://myhtrader.hmarkets.com/purchasechallenge?affiliateId=2944',
+  },
 ];
 
 const BROKERS = [
@@ -131,6 +136,19 @@ export default function TradingHubScreen() {
           <LinkItem key={i} {...item} icon="copy-outline" />
         ))}
 
+        <View style={[styles.partnerInquiry, { backgroundColor: c.card, borderColor: c.cardBorder }]}>
+          <Ionicons name="mail-outline" size={18} color={c.gold} />
+          <Text style={[styles.partnerText, { color: c.textSecondary }]}>
+            Any Brokers/Prop Firms interested in being listed please reach out at:{' '}
+            <Text
+              style={{ color: c.gold, fontFamily: 'DMSans_600SemiBold' }}
+              onPress={() => Linking.openURL('mailto:support@mjliquidity.com')}
+            >
+              support@mjliquidity.com
+            </Text>
+          </Text>
+        </View>
+
         <View style={[styles.disclaimerSection, { borderColor: c.border }]}>
           <Text style={[styles.disclaimerTitle, { color: c.textMuted }]}>MJliquidity Disclaimer</Text>
           <Text style={[styles.disclaimerText, { color: c.textMuted }]}>
@@ -170,6 +188,8 @@ const styles = StyleSheet.create({
   linkCardRight: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   discountBadge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8 },
   discountText: { fontSize: 11, fontFamily: 'DMSans_700Bold', letterSpacing: 0.5 },
+  partnerInquiry: { flexDirection: 'row', alignItems: 'flex-start', gap: 10, padding: 16, borderRadius: 14, borderWidth: 1, marginTop: 24 },
+  partnerText: { fontSize: 13, fontFamily: 'DMSans_400Regular', lineHeight: 20, flex: 1 },
   disclaimerSection: { marginTop: 32, paddingTop: 20, borderTopWidth: 1 },
   disclaimerTitle: { fontSize: 12, fontFamily: 'DMSans_600SemiBold', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 8 },
   disclaimerText: { fontSize: 11, fontFamily: 'DMSans_400Regular', lineHeight: 18 },
