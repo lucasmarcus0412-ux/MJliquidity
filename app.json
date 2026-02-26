@@ -15,7 +15,8 @@
     },
     "ios": {
       "supportsTablet": false,
-      "bundleIdentifier": "com.mjliquidity"
+      "bundleIdentifier": "com.mjliquidity",
+      "buildNumber": "3"
     },
     "android": {
       "package": "com.mjliquidity",
