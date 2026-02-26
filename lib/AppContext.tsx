@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useMemo, useCallback, ReactNode } from 'react';
-import { Platform } from 'react-native';
+import { Alert, Platform } from 'react-native';
 import {
   getAdminStatus,
   setAdminStatus as storeAdminStatus,
@@ -175,6 +175,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }
 
   async function setUserNameValue(name: string) {
+    if (!isAdmin && /mj/i.test(name)) {
+      Alert.alert('Username Not Allowed', 'Usernames containing "MJ" are reserved. Please choose a different name.');
+      return;
+    }
     setUserName(name);
     await storeUserName(name);
   }
