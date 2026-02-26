@@ -26,6 +26,11 @@ const PROP_FIRMS = [
     description: 'Funded trading challenges',
     url: 'https://myhtrader.hmarkets.com/purchasechallenge?affiliateId=2944',
   },
+  {
+    name: 'Funded Trading Plus',
+    description: 'Funded trading challenges',
+    url: 'http://fundedtradingplus.com/?ref=MJliquidity',
+  },
 ];
 
 const BROKERS = [
