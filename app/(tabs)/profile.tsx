@@ -116,6 +116,7 @@ export default function ProfileScreen() {
   const [showDisclaimer, setShowDisclaimer] = useState(false);
   const [showGuidelines, setShowGuidelines] = useState(false);
   const [showPrivacyPolicy, setShowPrivacyPolicy] = useState(false);
+  const [showTermsOfUse, setShowTermsOfUse] = useState(false);
   const [showModManager, setShowModManager] = useState(false);
   const [modNameInput, setModNameInput] = useState('');
   const [showBanManager, setShowBanManager] = useState(false);
@@ -552,6 +553,24 @@ export default function ProfileScreen() {
           </Pressable>
         </View>
 
+        <View style={styles.subscriptionTerms}>
+          <Text style={[styles.subscriptionTermsText, { color: c.textMuted }]}>
+            Subscriptions automatically renew unless auto-renew is turned off at least 24 hours before the end of the current period. Your account will be charged for renewal within 24 hours prior to the end of the current period. You can manage and cancel your subscriptions by going to your account settings on the App Store or Google Play after purchase.
+          </Text>
+          <Text style={[styles.subscriptionTermsText, { color: c.textMuted, marginTop: 8 }]}>
+            Payment will be charged to your Apple ID or Google Play account at confirmation of purchase. Any unused portion of a free trial period will be forfeited when purchasing a subscription.
+          </Text>
+          <View style={styles.subscriptionTermsLinks}>
+            <Pressable onPress={() => setShowTermsOfUse(true)}>
+              <Text style={[styles.subscriptionTermsLink, { color: c.gold }]}>Terms of Use</Text>
+            </Pressable>
+            <Text style={[styles.subscriptionTermsDot, { color: c.textMuted }]}>{'\u00B7'}</Text>
+            <Pressable onPress={() => setShowPrivacyPolicy(true)}>
+              <Text style={[styles.subscriptionTermsLink, { color: c.gold }]}>Privacy Policy</Text>
+            </Pressable>
+          </View>
+        </View>
+
         <Text style={[styles.sectionLabel, { color: c.textMuted }]}>LEARN</Text>
         <View style={[styles.sectionCard, { backgroundColor: c.card, borderColor: c.cardBorder }]}>
           <Pressable
@@ -789,6 +808,17 @@ export default function ProfileScreen() {
 
         <Text style={[styles.sectionLabel, { color: c.textMuted }]}>LEGAL</Text>
         <View style={[styles.sectionCard, { backgroundColor: c.card, borderColor: c.cardBorder }]}>
+          <Pressable onPress={() => setShowTermsOfUse(true)} style={styles.settingsRow}>
+            <View style={styles.settingsRowLeft}>
+              <Ionicons name="shield-checkmark-outline" size={20} color={c.textSecondary} />
+              <View>
+                <Text style={[styles.settingsLabel, { color: c.text }]}>Terms of Use (EULA)</Text>
+                <Text style={[styles.settingsValue, { color: c.textMuted }]}>Subscription & usage terms</Text>
+              </View>
+            </View>
+            <Ionicons name="chevron-forward" size={18} color={c.textMuted} />
+          </Pressable>
+          <View style={[styles.divider, { backgroundColor: c.border }]} />
           <Pressable onPress={() => setShowDisclaimer(true)} style={styles.settingsRow}>
             <View style={styles.settingsRowLeft}>
               <Ionicons name="document-text-outline" size={20} color={c.textSecondary} />
@@ -1027,6 +1057,98 @@ export default function ProfileScreen() {
         </View>
       </Modal>
 
+      <Modal visible={showTermsOfUse} animationType="slide" transparent>
+        <View style={styles.modalOverlay}>
+          <View style={[styles.legalModal, { backgroundColor: c.surface }]}>
+            <View style={styles.legalModalHeader}>
+              <Text style={[styles.legalModalTitle, { color: c.gold }]}>Terms of Use</Text>
+              <Pressable onPress={() => setShowTermsOfUse(false)} hitSlop={12}>
+                <Ionicons name="close" size={24} color={c.textSecondary} />
+              </Pressable>
+            </View>
+            <ScrollView showsVerticalScrollIndicator={false} style={styles.legalScroll}>
+              <Text style={[styles.legalText, { color: c.textMuted, marginBottom: 16 }]}>
+                Last updated: March 2026
+              </Text>
+
+              <Text style={[styles.privacySectionTitle, { color: c.text }]}>1. Acceptance of Terms</Text>
+              <Text style={[styles.legalText, { color: c.textSecondary }]}>
+                By downloading, installing, or using MJliquidity ("the App"), you agree to be bound by these Terms of Use. If you do not agree to these terms, do not use the App.
+              </Text>
+
+              <Text style={[styles.privacySectionTitle, { color: c.text }]}>2. Subscription Terms</Text>
+              <Text style={[styles.legalText, { color: c.textSecondary }]}>
+                MJliquidity offers the following auto-renewable subscription plans:
+              </Text>
+              {[
+                'Gold Intraday VIP — £74.99/month',
+                '4 Markets Session Analysis — £74.99/month',
+                'Full Access (Gold + 4 Markets) — £99.99/month',
+              ].map((item, i) => (
+                <View key={i} style={styles.guidelineRow}>
+                  <View style={[styles.guidelineDot, { backgroundColor: c.gold }]} />
+                  <Text style={[styles.guidelineText, { color: c.textSecondary }]}>{item}</Text>
+                </View>
+              ))}
+
+              <Text style={[styles.privacySectionTitle, { color: c.text }]}>3. Billing & Renewal</Text>
+              <Text style={[styles.legalText, { color: c.textSecondary }]}>
+                Payment will be charged to your Apple ID or Google Play account at confirmation of purchase. Subscriptions automatically renew unless auto-renew is turned off at least 24 hours before the end of the current period. Your account will be charged for renewal within 24 hours prior to the end of the current period at the rate of the selected plan.
+              </Text>
+
+              <Text style={[styles.privacySectionTitle, { color: c.text }]}>4. Cancellation</Text>
+              <Text style={[styles.legalText, { color: c.textSecondary }]}>
+                You can manage and cancel your subscriptions by going to your account settings on the App Store or Google Play Store after purchase. Cancellation will take effect at the end of the current billing period. No refunds will be provided for partial billing periods.
+              </Text>
+
+              <Text style={[styles.privacySectionTitle, { color: c.text }]}>5. Free Trials</Text>
+              <Text style={[styles.legalText, { color: c.textSecondary }]}>
+                If a free trial is offered, any unused portion of the free trial period will be forfeited when you purchase a subscription. Free trials may only be used once per Apple ID or Google account.
+              </Text>
+
+              <Text style={[styles.privacySectionTitle, { color: c.text }]}>6. Content & Disclaimer</Text>
+              <Text style={[styles.legalText, { color: c.textSecondary }]}>
+                All content provided in MJliquidity, including market analysis, trading ideas, educational material, and chat messages, is for informational and educational purposes only. Nothing in this App constitutes financial advice, investment advice, or a recommendation to buy or sell any financial instrument. You are solely responsible for your own trading decisions.
+              </Text>
+
+              <Text style={[styles.privacySectionTitle, { color: c.text }]}>7. User Conduct</Text>
+              <Text style={[styles.legalText, { color: c.textSecondary }]}>
+                Users must not share signals, financial advice, spam, or abusive content in community chats. MJliquidity reserves the right to ban or restrict users who violate community guidelines without notice or refund.
+              </Text>
+
+              <Text style={[styles.privacySectionTitle, { color: c.text }]}>8. Intellectual Property</Text>
+              <Text style={[styles.legalText, { color: c.textSecondary }]}>
+                All content, branding, and materials within the App are the property of MJliquidity. You may not reproduce, distribute, or create derivative works without prior written consent.
+              </Text>
+
+              <Text style={[styles.privacySectionTitle, { color: c.text }]}>9. Limitation of Liability</Text>
+              <Text style={[styles.legalText, { color: c.textSecondary }]}>
+                MJliquidity shall not be liable for any financial losses, damages, or claims arising from the use of information provided in the App. Trading involves substantial risk and is not suitable for every investor.
+              </Text>
+
+              <Text style={[styles.privacySectionTitle, { color: c.text }]}>10. Modifications</Text>
+              <Text style={[styles.legalText, { color: c.textSecondary }]}>
+                MJliquidity reserves the right to modify these terms at any time. Continued use of the App after changes constitutes acceptance of the updated terms.
+              </Text>
+
+              <Text style={[styles.privacySectionTitle, { color: c.text }]}>11. Contact</Text>
+              <Text style={[styles.legalText, { color: c.textSecondary }]}>
+                For questions about these terms, contact:
+              </Text>
+              <Text style={[styles.legalText, { color: c.gold, marginTop: 4 }]}>
+                support@mjliquidity.com
+              </Text>
+
+              <View style={styles.privacyFooter}>
+                <Text style={[styles.legalText, { color: c.textMuted, textAlign: 'center' }]}>
+                  MJliquidity{'\u2122'}
+                </Text>
+              </View>
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
+
       <Modal visible={showPrivacyPolicy} animationType="slide" transparent>
         <View style={styles.modalOverlay}>
           <View style={[styles.legalModal, { backgroundColor: c.surface }]}>
@@ -1204,4 +1326,9 @@ const styles = StyleSheet.create({
   privacyFooter: { marginTop: 24, paddingTop: 16, borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.06)', alignItems: 'center' },
   lockBadge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8 },
   lockBadgeText: { fontSize: 11, fontFamily: 'DMSans_700Bold', letterSpacing: 1 },
+  subscriptionTerms: { paddingHorizontal: 4, marginBottom: 16, marginTop: -8 },
+  subscriptionTermsText: { fontSize: 11, fontFamily: 'DMSans_400Regular', lineHeight: 16 },
+  subscriptionTermsLinks: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, marginTop: 12 },
+  subscriptionTermsLink: { fontSize: 12, fontFamily: 'DMSans_600SemiBold' },
+  subscriptionTermsDot: { fontSize: 16 },
 });
