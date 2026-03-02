@@ -21,7 +21,7 @@
     "android": {
       "package": "com.mjliquidity",
       "adaptiveIcon": {
-        "backgroundColor": "#0A0A0A",
+        "backgroundColor": "#000000",
         "foregroundImage": "./assets/images/icon.png"
       }
     },
