@@ -35,7 +35,7 @@ import {
   checkUserBanned,
 } from '@/lib/storage';
 import { getApiUrl } from '@/lib/query-client';
-import { useFocusEffect } from 'expo-router';
+import { useFocusEffect, useRouter } from 'expo-router';
 
 type ActiveTab = 'analysis' | 'chat';
 
@@ -76,6 +76,7 @@ function resolveImageUrl(uri: string | undefined): string | undefined {
 export default function ProMarketsScreen() {
   const c = Colors.dark;
   const insets = useSafeAreaInsets();
+  const router = useRouter();
   const { isAdmin, isModerator, userName, setUserNameValue, canAccessPro, subscriptionUrl } = useApp();
   const [activeTab, setActiveTab] = useState<ActiveTab>('analysis');
   const [posts, setPosts] = useState<AnalysisPost[]>([]);
@@ -294,6 +295,18 @@ export default function ProMarketsScreen() {
         <Text style={styles.paywallBtnText}>Subscribe Now</Text>
       </Pressable>
       <Text style={[styles.paywallPrice, { color: c.textMuted }]}>From £75/month</Text>
+      <Text style={[styles.paywallTerms, { color: c.textMuted }]}>
+        Subscriptions auto-renew unless cancelled at least 24 hours before the end of the current period. Payment is charged at confirmation of purchase. Manage or cancel anytime in your account settings.
+      </Text>
+      <View style={styles.paywallTermsLinks}>
+        <Pressable onPress={() => router.push('/(tabs)/profile')}>
+          <Text style={[styles.paywallTermsLink, { color: c.gold }]}>Terms of Use</Text>
+        </Pressable>
+        <Text style={[styles.paywallTermsDot, { color: c.textMuted }]}>{'\u00B7'}</Text>
+        <Pressable onPress={() => router.push('/(tabs)/profile')}>
+          <Text style={[styles.paywallTermsLink, { color: c.gold }]}>Privacy Policy</Text>
+        </Pressable>
+      </View>
     </View>
   );
 
@@ -683,6 +696,10 @@ const styles = StyleSheet.create({
   paywallBtn: { paddingHorizontal: 40, paddingVertical: 14, borderRadius: 24, marginBottom: 8 },
   paywallBtnText: { fontSize: 16, fontFamily: 'DMSans_700Bold', color: '#0A0A0A' },
   paywallPrice: { fontSize: 13, fontFamily: 'DMSans_400Regular' },
+  paywallTerms: { fontSize: 10, fontFamily: 'DMSans_400Regular', lineHeight: 15, textAlign: 'center' as const, marginTop: 16, paddingHorizontal: 8 },
+  paywallTermsLinks: { flexDirection: 'row' as const, alignItems: 'center' as const, justifyContent: 'center' as const, gap: 8, marginTop: 8 },
+  paywallTermsLink: { fontSize: 11, fontFamily: 'DMSans_600SemiBold' },
+  paywallTermsDot: { fontSize: 14 },
   bannedBar: { flexDirection: 'row' as const, alignItems: 'center' as const, justifyContent: 'center' as const, gap: 8, paddingVertical: 12 },
   bannedText: { fontSize: 14, fontFamily: 'DMSans_600SemiBold', color: '#FF5252' },
 });

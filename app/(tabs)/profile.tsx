@@ -555,10 +555,10 @@ export default function ProfileScreen() {
 
         <View style={styles.subscriptionTerms}>
           <Text style={[styles.subscriptionTermsText, { color: c.textMuted }]}>
-            Subscriptions automatically renew unless auto-renew is turned off at least 24 hours before the end of the current period. Your account will be charged for renewal within 24 hours prior to the end of the current period. You can manage and cancel your subscriptions by going to your account settings on the App Store or Google Play after purchase.
+            Subscriptions automatically renew unless auto-renew is turned off at least 24 hours before the end of the current period. Your account will be charged for renewal within 24 hours prior to the end of the current period. You can manage and cancel your subscriptions by going to your account settings after purchase.
           </Text>
           <Text style={[styles.subscriptionTermsText, { color: c.textMuted, marginTop: 8 }]}>
-            Payment will be charged to your Apple ID or Google Play account at confirmation of purchase. Any unused portion of a free trial period will be forfeited when purchasing a subscription.
+            Payment will be charged to your account at confirmation of purchase. Any unused portion of a free trial period will be forfeited when purchasing a subscription.
           </Text>
           <View style={styles.subscriptionTermsLinks}>
             <Pressable onPress={() => setShowTermsOfUse(true)}>
@@ -1093,17 +1093,17 @@ export default function ProfileScreen() {
 
               <Text style={[styles.privacySectionTitle, { color: c.text }]}>3. Billing & Renewal</Text>
               <Text style={[styles.legalText, { color: c.textSecondary }]}>
-                Payment will be charged to your Apple ID or Google Play account at confirmation of purchase. Subscriptions automatically renew unless auto-renew is turned off at least 24 hours before the end of the current period. Your account will be charged for renewal within 24 hours prior to the end of the current period at the rate of the selected plan.
+                Payment will be charged to your account at confirmation of purchase. Subscriptions automatically renew unless auto-renew is turned off at least 24 hours before the end of the current period. Your account will be charged for renewal within 24 hours prior to the end of the current period at the rate of the selected plan.
               </Text>
 
               <Text style={[styles.privacySectionTitle, { color: c.text }]}>4. Cancellation</Text>
               <Text style={[styles.legalText, { color: c.textSecondary }]}>
-                You can manage and cancel your subscriptions by going to your account settings on the App Store or Google Play Store after purchase. Cancellation will take effect at the end of the current billing period. No refunds will be provided for partial billing periods.
+                You can manage and cancel your subscriptions by going to your account settings after purchase. Cancellation will take effect at the end of the current billing period. No refunds will be provided for partial billing periods.
               </Text>
 
               <Text style={[styles.privacySectionTitle, { color: c.text }]}>5. Free Trials</Text>
               <Text style={[styles.legalText, { color: c.textSecondary }]}>
-                If a free trial is offered, any unused portion of the free trial period will be forfeited when you purchase a subscription. Free trials may only be used once per Apple ID or Google account.
+                If a free trial is offered, any unused portion of the free trial period will be forfeited when you purchase a subscription. Free trials may only be used once per account.
               </Text>
 
               <Text style={[styles.privacySectionTitle, { color: c.text }]}>6. Content & Disclaimer</Text>
@@ -1180,7 +1180,7 @@ export default function ProfileScreen() {
                 </View>
               ))}
               <Text style={[styles.legalText, { color: c.textSecondary, marginTop: 8 }]}>
-                We do not collect or store payment information directly. All payments are processed securely through Apple App Store or Google Play.
+                We do not collect or store payment information directly. All payments are processed securely through the respective app store.
               </Text>
 
               <Text style={[styles.privacySectionTitle, { color: c.text }]}>How We Use Information</Text>
