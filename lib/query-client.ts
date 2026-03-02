@@ -13,15 +13,23 @@ const apiFetch: typeof globalThis.fetch = (() => {
 })();
 
 export function getApiUrl(): string {
-  let host = process.env.EXPO_PUBLIC_DOMAIN;
+  const host = process.env.EXPO_PUBLIC_DOMAIN;
 
-  if (host) {
-    let url = new URL(`https://${host}`);
+  if (Platform.OS !== 'web' && host) {
+    const hostname = host.split(':')[0];
+    const url = new URL(`https://${hostname}`);
     return url.href;
   }
 
   if (typeof window !== 'undefined' && window.location) {
     const origin = window.location.origin;
+    if (origin.includes('localhost') || origin.includes('127.0.0.1')) {
+      return 'http://localhost:5000/';
+    }
+    if (host) {
+      const hostname = host.split(':')[0];
+      return `https://${hostname}/`;
+    }
     return origin.endsWith('/') ? origin : origin + '/';
   }
 
