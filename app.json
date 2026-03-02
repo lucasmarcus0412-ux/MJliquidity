@@ -23,7 +23,8 @@
       "adaptiveIcon": {
         "backgroundColor": "#000000",
         "foregroundImage": "./assets/images/icon.png"
-      }
+      },
+      "versionCode": 3
     },
     "web": {
       "favicon": "./assets/images/icon.png"
@@ -41,6 +42,15 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
-    }
+    },
+    "extra": {
+      "router": {
+        "origin": "https://replit.com/"
+      },
+      "eas": {
+        "projectId": "a95e6085-a939-4a2b-8126-04d944b5797a"
+      }
+    },
+    "owner": "mjliquidity"
   }
 }
