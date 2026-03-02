@@ -23,15 +23,19 @@ export const PRODUCT_IDS = {
 
 let isConfigured = false;
 
-export async function initRevenueCat(): Promise<void> {
-  if (isConfigured) return;
+export function isRevenueCatConfigured(): boolean {
+  return isConfigured;
+}
 
-  if (Platform.OS === 'web') return;
+export async function initRevenueCat(): Promise<boolean> {
+  if (isConfigured) return true;
+
+  if (Platform.OS === 'web') return false;
 
   const apiKey = getApiKey();
   if (!apiKey) {
     console.log('RevenueCat: No API key configured for', Platform.OS, '- skipping init');
-    return;
+    return false;
   }
 
   try {
@@ -41,6 +45,8 @@ export async function initRevenueCat(): Promise<void> {
 
     Purchases.configure({ apiKey });
     isConfigured = true;
+    console.log('RevenueCat: Configured successfully for', Platform.OS);
+    return true;
   } catch (error: any) {
     const msg = error?.message || '';
     if (msg.includes('Expo Go') || msg.includes('Invalid API key') || msg.includes('native store')) {
@@ -48,12 +54,34 @@ export async function initRevenueCat(): Promise<void> {
     } else {
       console.log('RevenueCat init error:', msg);
     }
+    return false;
+  }
+}
+
+export function addCustomerInfoListener(callback: (info: CustomerInfo) => void): () => void {
+  if (Platform.OS === 'web' || !isConfigured) return () => {};
+  try {
+    const listener = Purchases.addCustomerInfoUpdateListener(callback);
+    return () => {
+      if (listener && typeof listener.remove === 'function') {
+        listener.remove();
+      }
+    };
+  } catch (error) {
+    console.log('RevenueCat listener error:', error);
+    return () => {};
   }
 }
 
 export async function getCustomerInfo(): Promise<CustomerInfo | null> {
+  if (!isConfigured) {
+    const ok = await initRevenueCat();
+    if (!ok) return null;
+  }
   try {
-    return await Purchases.getCustomerInfo();
+    const info = await Purchases.getCustomerInfo();
+    console.log('RevenueCat entitlements:', Object.keys(info.entitlements.active));
+    return info;
   } catch (error) {
     console.log('RevenueCat getCustomerInfo:', error);
     return null;

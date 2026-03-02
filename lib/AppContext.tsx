@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useMemo, useCallback, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, useMemo, useCallback, useRef, ReactNode } from 'react';
 import { Alert, Platform } from 'react-native';
 import {
   getAdminStatus,
@@ -30,6 +30,7 @@ import {
   getCustomerInfo,
   checkEntitlements,
   restorePurchases as rcRestorePurchases,
+  addCustomerInfoListener,
 } from './revenuecat';
 
 interface AppContextValue {
@@ -76,9 +77,15 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [rcHasPro, setRcHasPro] = useState(false);
   const [rcIsSubscribed, setRcIsSubscribed] = useState(false);
   const [notificationPrefs, setNotificationPrefs] = useState<NotificationPreferences>({ analysis: false, chat: false });
+  const listenerCleanupRef = useRef<(() => void) | null>(null);
 
   useEffect(() => {
     loadState();
+    return () => {
+      if (listenerCleanupRef.current) {
+        listenerCleanupRef.current();
+      }
+    };
   }, []);
 
   useEffect(() => {
@@ -121,12 +128,24 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
     if (Platform.OS === 'ios' || Platform.OS === 'android') {
       try {
-        await initRevenueCat();
-        const customerInfo = await getCustomerInfo();
-        const entitlements = checkEntitlements(customerInfo);
-        setRcHasGold(entitlements.hasGold);
-        setRcHasPro(entitlements.hasFourMarkets);
-        setRcIsSubscribed(entitlements.isSubscribed);
+        const configured = await initRevenueCat();
+        if (configured) {
+          const customerInfo = await getCustomerInfo();
+          const entitlements = checkEntitlements(customerInfo);
+          setRcHasGold(entitlements.hasGold);
+          setRcHasPro(entitlements.hasFourMarkets);
+          setRcIsSubscribed(entitlements.isSubscribed);
+          console.log('RevenueCat initial entitlements:', entitlements);
+
+          const removeListener = addCustomerInfoListener((updatedInfo) => {
+            const updated = checkEntitlements(updatedInfo);
+            setRcHasGold(updated.hasGold);
+            setRcHasPro(updated.hasFourMarkets);
+            setRcIsSubscribed(updated.isSubscribed);
+            console.log('RevenueCat entitlements updated:', updated);
+          });
+          listenerCleanupRef.current = removeListener;
+        }
       } catch (error) {
         console.log('RevenueCat init (Expo Go preview mode):', error);
       }

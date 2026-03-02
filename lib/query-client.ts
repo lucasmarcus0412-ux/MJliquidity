@@ -12,13 +12,18 @@ const apiFetch: typeof globalThis.fetch = (() => {
   }
 })();
 
+const FALLBACK_API_URL = 'https://fcd30707-534f-4227-a8d7-13c384018020-00-3k8wgp0t183co.picard.replit.dev/';
+
 export function getApiUrl(): string {
   const host = process.env.EXPO_PUBLIC_DOMAIN;
 
-  if (Platform.OS !== 'web' && host) {
-    const hostname = host.split(':')[0];
-    const url = new URL(`https://${hostname}`);
-    return url.href;
+  if (Platform.OS !== 'web') {
+    if (host) {
+      const hostname = host.split(':')[0];
+      const url = new URL(`https://${hostname}`);
+      return url.href;
+    }
+    return FALLBACK_API_URL;
   }
 
   if (typeof window !== 'undefined' && window.location) {
