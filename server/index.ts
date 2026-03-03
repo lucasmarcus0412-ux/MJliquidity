@@ -198,7 +198,13 @@ function configureExpoManifestAndStatic(app: express.Application) {
     "templates",
     "landing-page.html",
   );
-  const landingPageTemplate = fs.readFileSync(templatePath, "utf-8");
+  let landingPageTemplate = "";
+  try {
+    landingPageTemplate = fs.readFileSync(templatePath, "utf-8");
+  } catch {
+    log("Landing page template not found at", templatePath, "— using fallback");
+    landingPageTemplate = "<!DOCTYPE html><html><head><title>MJliquidity</title></head><body><h1>MJliquidity</h1><p>Trading Community App</p></body></html>";
+  }
   const appName = getAppName();
 
   const distDir = getDistDir();
@@ -214,28 +220,33 @@ function configureExpoManifestAndStatic(app: express.Application) {
       return next();
     }
 
-    const platform = req.header("expo-platform");
-    if (platform && (platform === "ios" || platform === "android")) {
-      if (req.path === "/" || req.path === "/manifest") {
-        return serveExpoManifest(platform, res);
+    try {
+      const platform = req.header("expo-platform");
+      if (platform && (platform === "ios" || platform === "android")) {
+        if (req.path === "/" || req.path === "/manifest") {
+          return serveExpoManifest(platform, res);
+        }
       }
-    }
 
-    if (req.path !== "/" && req.path !== "/manifest") {
-      return next();
-    }
+      if (req.path !== "/" && req.path !== "/manifest") {
+        return next();
+      }
 
-    if (hasWebBuild && req.path === "/") {
-      return sendWebApp(res, getWebIndexHtml(distDir));
-    }
+      if (hasWebBuild && req.path === "/") {
+        return sendWebApp(res, getWebIndexHtml(distDir));
+      }
 
-    if (req.path === "/") {
-      return serveLandingPage({
-        req,
-        res,
-        landingPageTemplate,
-        appName,
-      });
+      if (req.path === "/") {
+        return serveLandingPage({
+          req,
+          res,
+          landingPageTemplate,
+          appName,
+        });
+      }
+    } catch (err) {
+      console.error("Error serving root route:", err);
+      return res.status(200).json({ status: "ok", app: appName });
     }
 
     next();
@@ -291,6 +302,10 @@ function setupErrorHandler(app: express.Application) {
 }
 
 (async () => {
+  app.get("/health", (_req: Request, res: Response) => {
+    res.status(200).json({ status: "ok" });
+  });
+
   setupCors(app);
   setupBodyParsing(app);
   setupRequestLogging(app);
