@@ -12,18 +12,13 @@ const apiFetch: typeof globalThis.fetch = (() => {
   }
 })();
 
-const PRODUCTION_API_URL = 'https://mjliquidity.replit.app/';
+const API_BASE_URL = 'https://mjliquidity.replit.app';
 
 export function getApiUrl(): string {
-  if (Platform.OS === 'web') {
-    if (typeof window !== 'undefined' && window.location) {
-      const origin = window.location.origin;
-      return origin.endsWith('/') ? origin : origin + '/';
-    }
-    return PRODUCTION_API_URL;
+  if (Platform.OS === 'web' && typeof window !== 'undefined' && window.location) {
+    return window.location.origin;
   }
-
-  return PRODUCTION_API_URL;
+  return API_BASE_URL;
 }
 
 async function throwIfResNotOk(res: Response) {
