@@ -35,7 +35,7 @@ import {
 } from '@/lib/storage';
 import { useFocusEffect } from 'expo-router';
 import { getApiUrl } from '@/lib/query-client';
-import { getOfferings, purchasePackage, PRODUCT_IDS } from '@/lib/revenuecat';
+import { getOfferings, purchasePackage, findPackageByProductId, PRODUCT_IDS } from '@/lib/revenuecat';
 import type { PurchasesPackage } from 'react-native-purchases';
 
 type ActiveSection = 'main' | 'education';
@@ -182,14 +182,12 @@ export default function ProfileScreen() {
       return;
     }
 
-    let pkg = availablePackages.find(
-      (p) => p.product.identifier === productId
-    );
+    let pkg = findPackageByProductId(availablePackages, productId);
 
     if (!pkg) {
       const freshPackages = await getOfferings();
       setAvailablePackages(freshPackages);
-      pkg = freshPackages.find((p) => p.product.identifier === productId);
+      pkg = findPackageByProductId(freshPackages, productId);
     }
 
     if (!pkg) {

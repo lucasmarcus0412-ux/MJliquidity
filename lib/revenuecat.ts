@@ -21,6 +21,31 @@ export const PRODUCT_IDS = {
   FULL_ACCESS: 'mjliquidity.bundle.monthly',
 } as const;
 
+export const ANDROID_PRODUCT_IDS = {
+  GOLD_VIP: 'mjliquidity.vip.monthly:gold-vip-monthly',
+  FOUR_MARKETS: 'mjliquidity.analysis.monthly:analysis-monthly',
+  FULL_ACCESS: 'mjliquidity.bundle.monthly:bundle-monthly',
+} as const;
+
+export function findPackageByProductId(packages: PurchasesPackage[], productId: string): PurchasesPackage | undefined {
+  let pkg = packages.find((p) => p.product.identifier === productId);
+  if (pkg) return pkg;
+
+  pkg = packages.find((p) => p.product.identifier.startsWith(productId));
+  if (pkg) return pkg;
+
+  const androidId = Object.entries(PRODUCT_IDS).find(([, v]) => v === productId);
+  if (androidId) {
+    const androidProductId = ANDROID_PRODUCT_IDS[androidId[0] as keyof typeof ANDROID_PRODUCT_IDS];
+    if (androidProductId) {
+      pkg = packages.find((p) => p.product.identifier === androidProductId);
+      if (pkg) return pkg;
+    }
+  }
+
+  return undefined;
+}
+
 let isConfigured = false;
 
 export function isRevenueCatConfigured(): boolean {
@@ -163,7 +188,7 @@ export async function purchasePackage(pkg: PurchasesPackage): Promise<CustomerIn
 
 export async function purchaseFromPaywall(productId: string): Promise<CustomerInfo | null> {
   const offerings = await getOfferings();
-  const pkg = offerings.find((p) => p.product.identifier === productId);
+  const pkg = findPackageByProductId(offerings, productId);
   if (!pkg) {
     throw new Error('Subscription not available');
   }
