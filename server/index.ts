@@ -33,24 +33,22 @@ function setupCors(app: express.Application) {
       origin?.startsWith("http://localhost:") ||
       origin?.startsWith("http://127.0.0.1:");
 
+    const isReplitDev = origin?.includes(".replit.dev") || origin?.includes(".replit.app");
+
     const isNativeApp = !origin;
 
-    if (isNativeApp) {
-      res.header("Access-Control-Allow-Origin", "*");
+    const allowedOrigin = isNativeApp || (origin && (origins.has(origin) || isLocalhost || isReplitDev));
+
+    if (allowedOrigin) {
+      res.header("Access-Control-Allow-Origin", origin || "*");
       res.header(
         "Access-Control-Allow-Methods",
         "GET, POST, PUT, DELETE, OPTIONS",
       );
       res.header("Access-Control-Allow-Headers", "Content-Type, Accept");
-      res.header("Access-Control-Allow-Credentials", "true");
-    } else if (origin && (origins.has(origin) || isLocalhost)) {
-      res.header("Access-Control-Allow-Origin", origin);
-      res.header(
-        "Access-Control-Allow-Methods",
-        "GET, POST, PUT, DELETE, OPTIONS",
-      );
-      res.header("Access-Control-Allow-Headers", "Content-Type, Accept");
-      res.header("Access-Control-Allow-Credentials", "true");
+      if (origin) {
+        res.header("Access-Control-Allow-Credentials", "true");
+      }
     }
 
     if (req.method === "OPTIONS") {

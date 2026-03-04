@@ -29,6 +29,14 @@ Notifications.setNotificationHandler({
   }),
 });
 
+if (Platform.OS === 'web' && typeof window !== 'undefined') {
+  window.addEventListener('unhandledrejection', (event) => {
+    if (event.reason?.message?.includes('timeout exceeded')) {
+      event.preventDefault();
+    }
+  });
+}
+
 SplashScreen.preventAutoHideAsync();
 
 function RootLayoutNav() {

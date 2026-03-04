@@ -88,7 +88,7 @@ Preferred communication style: Simple, everyday language.
 - **AsyncStorage** — Client-side persistent storage
 - **react-native-purchases** — RevenueCat SDK for in-app subscriptions
 - **React Native Reanimated / Gesture Handler / Screens** — Native navigation and animation primitives
-- **http-proxy-middleware** — Dev server proxying for Expo/Express integration on Replit
+- **http-proxy-middleware** — Dev server proxying for Expo/Express integration on Replit (used in `metro.config.js` to proxy `/api/*` and `/uploads/*` requests from Expo dev server on port 8081 to Express on port 5000)
 
 ### Environment Variables
 - `DATABASE_URL` — PostgreSQL connection string (required for database operations)
