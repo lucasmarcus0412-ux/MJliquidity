@@ -12,7 +12,7 @@ const apiFetch: typeof globalThis.fetch = (() => {
   }
 })();
 
-const FALLBACK_API_URL = 'https://fcd30707-534f-4227-a8d7-13c384018020-00-3k8wgp0t183co.picard.replit.dev/';
+const FALLBACK_API_URL = 'https://mjliquidity.replit.app/';
 
 export function getApiUrl(): string {
   const host = process.env.EXPO_PUBLIC_DOMAIN;
