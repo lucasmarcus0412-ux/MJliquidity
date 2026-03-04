@@ -24,7 +24,8 @@
         "backgroundColor": "#000000",
         "foregroundImage": "./assets/images/icon.png"
       },
-      "versionCode": 3
+      "versionCode": 3,
+      "permissions": ["com.android.vending.BILLING"]
     },
     "web": {
       "favicon": "./assets/images/icon.png"

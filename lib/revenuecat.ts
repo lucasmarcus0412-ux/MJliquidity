@@ -39,20 +39,19 @@ export async function initRevenueCat(): Promise<boolean> {
   }
 
   try {
-    if (__DEV__) {
-      Purchases.setLogLevel(LOG_LEVEL.VERBOSE);
-    }
+    Purchases.setLogLevel(__DEV__ ? LOG_LEVEL.VERBOSE : LOG_LEVEL.INFO);
 
+    console.log('RevenueCat: Configuring for', Platform.OS, 'with key:', apiKey.substring(0, 8) + '...');
     Purchases.configure({ apiKey });
     isConfigured = true;
     console.log('RevenueCat: Configured successfully for', Platform.OS);
     return true;
   } catch (error: any) {
     const msg = error?.message || '';
-    if (msg.includes('Expo Go') || msg.includes('Invalid API key') || msg.includes('native store')) {
-      console.log('RevenueCat: Running in Expo Go preview mode — subscriptions disabled');
-    } else {
-      console.log('RevenueCat init error:', msg);
+    console.log('RevenueCat init error for', Platform.OS, ':', msg);
+    if (msg.includes('already configured') || msg.includes('has been configured')) {
+      isConfigured = true;
+      return true;
     }
     return false;
   }
@@ -108,14 +107,44 @@ export function checkEntitlements(customerInfo: CustomerInfo | null): {
 }
 
 export async function getOfferings(): Promise<PurchasesPackage[]> {
+  if (!isConfigured) {
+    console.log('RevenueCat getOfferings: Not configured, attempting init...');
+    const ok = await initRevenueCat();
+    if (!ok) {
+      console.log('RevenueCat getOfferings: Init failed, cannot fetch offerings');
+      return [];
+    }
+  }
+
   try {
+    console.log('RevenueCat getOfferings: Fetching offerings for', Platform.OS);
     const offerings = await Purchases.getOfferings();
+    console.log('RevenueCat getOfferings: Raw response -', 
+      'current:', offerings.current ? 'exists' : 'null',
+      'all keys:', Object.keys(offerings.all || {}));
+
     if (offerings.current && offerings.current.availablePackages.length > 0) {
+      console.log('RevenueCat getOfferings: Found', offerings.current.availablePackages.length, 'packages:',
+        offerings.current.availablePackages.map(p => p.product.identifier));
       return offerings.current.availablePackages;
     }
+
+    const allOfferingKeys = Object.keys(offerings.all || {});
+    if (allOfferingKeys.length > 0) {
+      console.log('RevenueCat getOfferings: No current offering, checking all:', allOfferingKeys);
+      for (const key of allOfferingKeys) {
+        const offering = offerings.all[key];
+        if (offering.availablePackages.length > 0) {
+          console.log('RevenueCat getOfferings: Using offering', key, 'with', offering.availablePackages.length, 'packages');
+          return offering.availablePackages;
+        }
+      }
+    }
+
+    console.log('RevenueCat getOfferings: No packages found in any offering');
     return [];
-  } catch (error) {
-    console.log('RevenueCat getOfferings:', error);
+  } catch (error: any) {
+    console.log('RevenueCat getOfferings error:', error?.message || error);
     return [];
   }
 }

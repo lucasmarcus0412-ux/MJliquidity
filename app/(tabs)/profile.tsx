@@ -177,17 +177,27 @@ export default function ProfileScreen() {
       if (subscriptionUrl) {
         Linking.openURL(subscriptionUrl).catch(() => Alert.alert('Error', 'Could not open link.'));
       } else {
-        Alert.alert('Download the App', 'In-app subscriptions are available through the iOS app. Download MJliquidity from the App Store to subscribe.');
+        Alert.alert('Download the App', 'In-app subscriptions are available through the iOS or Android app. Download MJliquidity to subscribe.');
       }
       return;
     }
 
-    const pkg = availablePackages.find(
+    let pkg = availablePackages.find(
       (p) => p.product.identifier === productId
     );
 
     if (!pkg) {
-      Alert.alert('Not Available', 'This subscription is not available yet. Please try again later.');
+      const freshPackages = await getOfferings();
+      setAvailablePackages(freshPackages);
+      pkg = freshPackages.find((p) => p.product.identifier === productId);
+    }
+
+    if (!pkg) {
+      if (Platform.OS === 'android') {
+        Alert.alert('Subscription Unavailable', 'Unable to load subscriptions from Google Play. Please ensure:\n\n1. You have the latest version of the app\n2. Google Play Store is updated\n3. You are signed in to Google Play\n\nThen restart the app and try again.');
+      } else {
+        Alert.alert('Not Available', 'This subscription is not available yet. Please make sure you have the latest version of the app installed and try again.');
+      }
       return;
     }
 
