@@ -74,20 +74,16 @@ export async function setAdminStatus(loggedIn: boolean): Promise<void> {
 
 export async function getAnalysisPosts(channel: FeedChannel = 'free'): Promise<AnalysisPost[]> {
   const baseUrl = getApiUrl();
-  const url = new URL(`/api/posts/${channel}`, baseUrl);
-  const res = await apiFetch(url.toString(), {
+  const url = `${baseUrl}/api/posts/${channel}`;
+  const res = await apiFetch(url, {
     headers: { "Accept": "application/json" },
   });
   if (!res.ok) throw new Error(`Failed to load posts (${res.status})`);
-  const contentType = res.headers.get("content-type") || "";
-  if (!contentType.includes("application/json")) {
-    const text = await res.text();
-    if (text.trim().startsWith("<!DOCTYPE") || text.trim().startsWith("<html")) {
-      throw new Error("Server returned HTML instead of data. Please try refreshing.");
-    }
-    throw new Error(`Unexpected response type: ${contentType}`);
+  const text = await res.text();
+  if (!text || text.trim().startsWith("<!DOCTYPE") || text.trim().startsWith("<html")) {
+    throw new Error("Server returned HTML instead of data.");
   }
-  const data = await res.json();
+  const data = JSON.parse(text);
   return data.map((p: any) => ({
     ...p,
     imageUri: p.imageUri || p.image_uri || undefined,
@@ -121,12 +117,13 @@ export async function deleteAnalysisPost(id: string, _channel: FeedChannel = 'fr
 export async function getChatMessages(channel?: ChatChannel): Promise<ChatMessage[]> {
   const ch = channel || 'gold_vip';
   const baseUrl = getApiUrl();
-  const url = new URL(`/api/chat/${ch}`, baseUrl);
-  const res = await apiFetch(url.toString(), {
+  const url = `${baseUrl}/api/chat/${ch}`;
+  const res = await apiFetch(url, {
     headers: { "Accept": "application/json" },
   });
   if (!res.ok) throw new Error(`Failed to load chat (${res.status})`);
-  return await res.json();
+  const text = await res.text();
+  return JSON.parse(text);
 }
 
 export async function addChatMessage(msg: Omit<ChatMessage, 'id' | 'timestamp'>, channel?: ChatChannel): Promise<ChatMessage> {
@@ -147,12 +144,13 @@ export async function deleteChatMessage(id: string, _channel?: ChatChannel): Pro
 export async function getEducationPosts(): Promise<EducationPost[]> {
   try {
     const baseUrl = getApiUrl();
-    const url = new URL('/api/education', baseUrl);
-    const res = await apiFetch(url.toString(), {
+    const url = `${baseUrl}/api/education`;
+    const res = await apiFetch(url, {
       headers: { "Accept": "application/json" },
     });
     if (!res.ok) return [];
-    return await res.json();
+    const text = await res.text();
+    return JSON.parse(text);
   } catch (err) {
     console.error('Error fetching education:', err);
     return [];
@@ -177,12 +175,13 @@ export async function deleteEducationPost(id: string): Promise<void> {
 export async function getModerators(): Promise<Moderator[]> {
   try {
     const baseUrl = getApiUrl();
-    const url = new URL('/api/moderators', baseUrl);
-    const res = await apiFetch(url.toString(), {
+    const url = `${baseUrl}/api/moderators`;
+    const res = await apiFetch(url, {
       headers: { "Accept": "application/json" },
     });
     if (!res.ok) return [];
-    return await res.json();
+    const text = await res.text();
+    return JSON.parse(text);
   } catch (err) {
     console.error('Error fetching moderators:', err);
     return [];

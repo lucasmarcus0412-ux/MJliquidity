@@ -21,43 +21,28 @@ export function getApiUrl(): string {
   return API_BASE_URL;
 }
 
-async function throwIfResNotOk(res: Response) {
-  if (!res.ok) {
-    const text = (await res.text()) || res.statusText;
-    throw new Error(`${res.status}: ${text}`);
-  }
-}
-
-async function ensureJsonResponse(res: Response): Promise<void> {
-  const ct = res.headers.get("content-type") || "";
-  if (!ct.includes("application/json")) {
-    const body = await res.text();
-    if (body.trim().startsWith("<!DOCTYPE") || body.trim().startsWith("<html")) {
-      throw new Error("Server returned HTML instead of JSON. The API may be unreachable.");
-    }
-  }
-}
-
 export async function apiRequest(
   method: string,
   route: string,
   data?: unknown | undefined,
 ): Promise<Response> {
   const baseUrl = getApiUrl();
-  const url = new URL(route, baseUrl);
+  const url = `${baseUrl}${route.startsWith('/') ? route : '/' + route}`;
 
-  const res = await apiFetch(url.toString(), {
+  const res = await apiFetch(url, {
     method,
     headers: {
       "Accept": "application/json",
       ...(data ? { "Content-Type": "application/json" } : {}),
     },
     body: data ? JSON.stringify(data) : undefined,
-    credentials: "include",
   });
 
-  await ensureJsonResponse(res);
-  await throwIfResNotOk(res);
+  if (!res.ok) {
+    let errorText = res.statusText;
+    try { errorText = await res.text(); } catch {}
+    throw new Error(`${res.status}: ${errorText}`);
+  }
   return res;
 }
 
@@ -68,10 +53,10 @@ export const getQueryFn: <T>(options: {
   ({ on401: unauthorizedBehavior }) =>
   async ({ queryKey }) => {
     const baseUrl = getApiUrl();
-    const url = new URL(queryKey.join("/") as string, baseUrl);
+    const path = queryKey.join("/");
+    const url = `${baseUrl}${path.startsWith('/') ? path : '/' + path}`;
 
-    const res = await apiFetch(url.toString(), {
-      credentials: "include",
+    const res = await apiFetch(url, {
       headers: { "Accept": "application/json" },
     });
 
@@ -79,9 +64,14 @@ export const getQueryFn: <T>(options: {
       return null;
     }
 
-    await ensureJsonResponse(res);
-    await throwIfResNotOk(res);
-    return await res.json();
+    if (!res.ok) {
+      let errorText = res.statusText;
+      try { errorText = await res.text(); } catch {}
+      throw new Error(`${res.status}: ${errorText}`);
+    }
+
+    const text = await res.text();
+    return JSON.parse(text);
   };
 
 export const queryClient = new QueryClient({
