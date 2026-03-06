@@ -78,6 +78,7 @@ function resolveImageUrl(uri: string | undefined): string | undefined {
 export default function ProMarketsScreen() {
   const c = Colors.dark;
   const insets = useSafeAreaInsets();
+  const tabBarHeight = Platform.OS === 'web' ? 84 : (49 + insets.bottom);
   const router = useRouter();
   const { isAdmin, isModerator, userName, setUserNameValue, canAccessPro, subscriptionUrl, refreshSubscriptionStatus } = useApp();
   const [activeTab, setActiveTab] = useState<ActiveTab>('analysis');
@@ -554,14 +555,14 @@ export default function ProMarketsScreen() {
           )}
 
           {isBanned ? (
-            <View style={[styles.inputContainer, { backgroundColor: c.surface, borderTopColor: c.border, paddingBottom: Platform.OS === 'web' ? 42 : Math.max(insets.bottom, 8) }]}>
+            <View style={[styles.inputContainer, { backgroundColor: c.surface, borderTopColor: c.border, paddingBottom: tabBarHeight }]}>
               <View style={styles.bannedBar}>
                 <Ionicons name="ban-outline" size={16} color="#FF5252" />
                 <Text style={styles.bannedText}>You have been banned from chat</Text>
               </View>
             </View>
           ) : (
-            <View style={[styles.inputContainer, { backgroundColor: c.surface, borderTopColor: c.border, paddingBottom: Platform.OS === 'web' ? 42 : Math.max(insets.bottom, 8) }]}>
+            <View style={[styles.inputContainer, { backgroundColor: c.surface, borderTopColor: c.border, paddingBottom: tabBarHeight }]}>
               <View style={[styles.inputWrapper, { backgroundColor: c.inputBackground, borderColor: c.inputBorder }]}>
                 <TextInput
                   placeholder="Type a message..."
