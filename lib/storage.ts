@@ -21,6 +21,7 @@ const KEYS = {
   SUBSCRIPTION_TIER: 'mjl_subscription_tier',
   NOTIF_ANALYSIS: 'mjl_notif_analysis',
   NOTIF_CHAT: 'mjl_notif_chat',
+  HIDDEN_MESSAGES: 'mjl_hidden_messages',
 };
 
 export type SubscriptionTier = 'none' | 'gold_vip' | 'pro' | 'all_access';
@@ -324,4 +325,31 @@ export async function getNotificationPreferences(): Promise<NotificationPreferen
 export async function setNotificationPreference(key: 'analysis' | 'chat', enabled: boolean): Promise<void> {
   const storageKey = key === 'analysis' ? KEYS.NOTIF_ANALYSIS : KEYS.NOTIF_CHAT;
   await AsyncStorage.setItem(storageKey, enabled ? 'true' : 'false');
+}
+
+export async function reportMessage(messageId: string, reportedBy: string, channel: string, reason?: string): Promise<void> {
+  const baseUrl = getApiUrl();
+  const res = await apiFetch(new URL('/api/reports', baseUrl).toString(), {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ messageId, reportedBy, reason, channel }),
+  });
+  if (!res.ok) {
+    throw new Error(`Report failed: ${res.status}`);
+  }
+}
+
+export async function getHiddenMessages(channel: string): Promise<string[]> {
+  const key = `${KEYS.HIDDEN_MESSAGES}_${channel}`;
+  const data = await AsyncStorage.getItem(key);
+  return data ? JSON.parse(data) : [];
+}
+
+export async function hideMessage(messageId: string, channel: string): Promise<void> {
+  const key = `${KEYS.HIDDEN_MESSAGES}_${channel}`;
+  const hidden = await getHiddenMessages(channel);
+  if (!hidden.includes(messageId)) {
+    hidden.push(messageId);
+    await AsyncStorage.setItem(key, JSON.stringify(hidden));
+  }
 }

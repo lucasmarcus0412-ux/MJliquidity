@@ -8,12 +8,14 @@ import {
   type EducationPost,
   type Moderator,
   type BannedUser,
+  type ReportedMessage,
   users,
   analysisPosts,
   chatMessages,
   educationPosts,
   moderators,
   bannedUsers,
+  reportedMessages,
 } from "@shared/schema";
 
 const db = drizzle(process.env.DATABASE_URL!);
@@ -43,6 +45,10 @@ export interface IStorage {
   banUser(ban: BannedUser): Promise<BannedUser>;
   unbanUser(id: string): Promise<void>;
   isUserBanned(username: string): Promise<boolean>;
+
+  getReportedMessages(): Promise<ReportedMessage[]>;
+  reportMessage(report: ReportedMessage): Promise<ReportedMessage>;
+  deleteReport(id: string): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -129,6 +135,19 @@ export class DatabaseStorage implements IStorage {
   async isUserBanned(username: string): Promise<boolean> {
     const all = await db.select().from(bannedUsers);
     return all.some(b => b.username.toLowerCase() === username.toLowerCase());
+  }
+
+  async getReportedMessages(): Promise<ReportedMessage[]> {
+    return db.select().from(reportedMessages).orderBy(desc(reportedMessages.reportedAt));
+  }
+
+  async reportMessage(report: ReportedMessage): Promise<ReportedMessage> {
+    const [created] = await db.insert(reportedMessages).values(report).returning();
+    return created;
+  }
+
+  async deleteReport(id: string): Promise<void> {
+    await db.delete(reportedMessages).where(eq(reportedMessages.id, id));
   }
 }
 

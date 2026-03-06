@@ -33,6 +33,9 @@ import {
   uploadImage,
   banUser,
   checkUserBanned,
+  reportMessage,
+  hideMessage,
+  getHiddenMessages,
 } from '@/lib/storage';
 import { getApiUrl } from '@/lib/query-client';
 import { useFocusEffect, useRouter } from 'expo-router';
@@ -88,6 +91,7 @@ export default function GoldIntradayScreen() {
   const [imageBase64, setImageBase64] = useState<string | null>(null);
   const [isPosting, setIsPosting] = useState(false);
   const [isBanned, setIsBanned] = useState(false);
+  const [hiddenMessageIds, setHiddenMessageIds] = useState<string[]>([]);
   const [paywallPackages, setPaywallPackages] = useState<PurchasesPackage[]>([]);
   const flatListRef = useRef<FlatList>(null);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -124,6 +128,7 @@ export default function GoldIntradayScreen() {
     useCallback(() => {
       loadPosts();
       loadMessages();
+      getHiddenMessages('gold_vip').then(setHiddenMessageIds).catch(() => {});
       if (!canAccessGold && (Platform.OS === 'ios' || Platform.OS === 'android')) {
         getOfferings().then(setPaywallPackages).catch(() => {});
       }
@@ -248,6 +253,61 @@ export default function GoldIntradayScreen() {
       }
     }
   };
+
+  const handleReportMessage = async (messageId: string) => {
+    const displayName = userName || 'Anonymous';
+    if (Platform.OS === 'web') {
+      const reason = window.prompt('Reason for reporting (optional):');
+      if (reason === null) return;
+      try {
+        await reportMessage(messageId, displayName, 'gold_vip', reason || undefined);
+        Alert.alert('Reported', 'This message has been reported to the admins.');
+      } catch { Alert.alert('Error', 'Failed to report message.'); }
+    } else {
+      Alert.alert('Report Message', 'Report this message to admins?', [
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'Report', style: 'destructive', onPress: async () => {
+          try {
+            await reportMessage(messageId, displayName, 'gold_vip');
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+            Alert.alert('Reported', 'This message has been reported to the admins.');
+          } catch { Alert.alert('Error', 'Failed to report message.'); }
+        }},
+      ]);
+    }
+  };
+
+  const handleHideMessage = async (messageId: string) => {
+    try {
+      await hideMessage(messageId, 'gold_vip');
+      setHiddenMessageIds(prev => [...prev, messageId]);
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    } catch { console.error('Failed to hide message'); }
+  };
+
+  const handleMessageAction = (item: ChatMessage) => {
+    if (isAdmin || isModerator) return;
+    if (item.isAdmin) return;
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    if (Platform.OS === 'web') {
+      const action = window.confirm('Would you like to report this message?\n\nClick OK to report, or Cancel to dismiss.\n\nTo hide this message, press OK in the next prompt.');
+      if (action) {
+        handleReportMessage(item.id);
+      } else {
+        if (window.confirm('Hide this message from your view?')) {
+          handleHideMessage(item.id);
+        }
+      }
+    } else {
+      Alert.alert('Message Options', undefined, [
+        { text: 'Report', style: 'destructive', onPress: () => handleReportMessage(item.id) },
+        { text: 'Hide', onPress: () => handleHideMessage(item.id) },
+        { text: 'Cancel', style: 'cancel' },
+      ]);
+    }
+  };
+
+  const filteredMessages = useMemo(() => messages.filter(m => !hiddenMessageIds.includes(m.id)), [messages, hiddenMessageIds]);
 
   const webTopInset = Platform.OS === 'web' ? 67 : 0;
 
@@ -455,45 +515,47 @@ export default function GoldIntradayScreen() {
         <View style={{ flex: 1 }}>
           <FlatList
             ref={flatListRef}
-            data={messages}
+            data={filteredMessages}
             keyExtractor={(item) => item.id}
             renderItem={({ item }) => (
-              <View style={[styles.messageBubble, item.isAdmin && styles.adminMessageStyle, item.isModerator && styles.modMessageStyle]}>
-                <View style={styles.messageHeader}>
-                  <View style={styles.nameRow}>
-                    {item.isAdmin && (
-                      <View style={[styles.adminTag, { backgroundColor: c.goldMuted }]}>
-                        <Ionicons name="shield-checkmark" size={10} color={c.gold} />
-                      </View>
-                    )}
-                    {item.isModerator && !item.isAdmin && (
-                      <View style={[styles.adminTag, { backgroundColor: 'rgba(76, 175, 80, 0.15)' }]}>
-                        <Ionicons name="shield-half-outline" size={10} color="#4CAF50" />
-                      </View>
-                    )}
-                    <Text style={[styles.messageName, { color: item.isAdmin ? c.gold : item.isModerator ? '#4CAF50' : c.textSecondary }]}>
-                      {item.username}
-                    </Text>
-                    {item.isModerator && !item.isAdmin && (
-                      <Text style={styles.modLabel}>MOD</Text>
-                    )}
+              <Pressable onLongPress={() => handleMessageAction(item)} delayLongPress={400}>
+                <View style={[styles.messageBubble, item.isAdmin && styles.adminMessageStyle, item.isModerator && styles.modMessageStyle]}>
+                  <View style={styles.messageHeader}>
+                    <View style={styles.nameRow}>
+                      {item.isAdmin && (
+                        <View style={[styles.adminTag, { backgroundColor: c.goldMuted }]}>
+                          <Ionicons name="shield-checkmark" size={10} color={c.gold} />
+                        </View>
+                      )}
+                      {item.isModerator && !item.isAdmin && (
+                        <View style={[styles.adminTag, { backgroundColor: 'rgba(76, 175, 80, 0.15)' }]}>
+                          <Ionicons name="shield-half-outline" size={10} color="#4CAF50" />
+                        </View>
+                      )}
+                      <Text style={[styles.messageName, { color: item.isAdmin ? c.gold : item.isModerator ? '#4CAF50' : c.textSecondary }]}>
+                        {item.username}
+                      </Text>
+                      {item.isModerator && !item.isAdmin && (
+                        <Text style={styles.modLabel}>MOD</Text>
+                      )}
+                    </View>
+                    <View style={styles.messageHeaderRight}>
+                      <Text style={[styles.messageTime, { color: c.textMuted }]}>{formatChatTime(item.timestamp)}</Text>
+                      {(isAdmin || isModerator) && !item.isAdmin && (
+                        <Pressable onPress={() => handleBanUser(item.username)} hitSlop={8}>
+                          <Ionicons name="ban-outline" size={14} color="#FF5252" />
+                        </Pressable>
+                      )}
+                      {(isAdmin || isModerator) && (
+                        <Pressable onPress={() => handleDeleteMessage(item.id)} hitSlop={8}>
+                          <Ionicons name="trash-outline" size={14} color={c.textMuted} />
+                        </Pressable>
+                      )}
+                    </View>
                   </View>
-                  <View style={styles.messageHeaderRight}>
-                    <Text style={[styles.messageTime, { color: c.textMuted }]}>{formatChatTime(item.timestamp)}</Text>
-                    {(isAdmin || isModerator) && !item.isAdmin && (
-                      <Pressable onPress={() => handleBanUser(item.username)} hitSlop={8}>
-                        <Ionicons name="ban-outline" size={14} color="#FF5252" />
-                      </Pressable>
-                    )}
-                    {(isAdmin || isModerator) && (
-                      <Pressable onPress={() => handleDeleteMessage(item.id)} hitSlop={8}>
-                        <Ionicons name="trash-outline" size={14} color={c.textMuted} />
-                      </Pressable>
-                    )}
-                  </View>
+                  <Text style={[styles.messageText, { color: c.text }]}>{item.text}</Text>
                 </View>
-                <Text style={[styles.messageText, { color: c.text }]}>{item.text}</Text>
-              </View>
+              </Pressable>
             )}
             contentContainerStyle={[styles.messagesList, { paddingBottom: 8, flexGrow: 1 }]}
             showsVerticalScrollIndicator={false}

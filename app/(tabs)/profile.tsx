@@ -118,6 +118,8 @@ export default function ProfileScreen() {
   const [modNameInput, setModNameInput] = useState('');
   const [showBanManager, setShowBanManager] = useState(false);
   const [bannedUsers, setBannedUsers] = useState<BannedUser[]>([]);
+  const [showReports, setShowReports] = useState(false);
+  const [reports, setReports] = useState<any[]>([]);
   const [availablePackages, setAvailablePackages] = useState<PurchasesPackage[]>([]);
   const [purchasing, setPurchasing] = useState(false);
   const [restoring, setRestoring] = useState(false);
@@ -733,6 +735,26 @@ export default function ProfileScreen() {
                 <Ionicons name="chevron-forward" size={18} color={c.textMuted} />
               </Pressable>
               <View style={[styles.divider, { backgroundColor: c.border }]} />
+              <Pressable onPress={async () => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                try {
+                  const baseUrl = getApiUrl();
+                  const res = await fetch(new URL('/api/reports', baseUrl).toString());
+                  const data = await res.json();
+                  setReports(data);
+                } catch { setReports([]); }
+                setShowReports(true);
+              }} style={styles.settingsRow}>
+                <View style={styles.settingsRowLeft}>
+                  <Ionicons name="flag-outline" size={20} color="#FF9800" />
+                  <View>
+                    <Text style={[styles.settingsLabel, { color: c.text }]}>Reported Messages</Text>
+                    <Text style={[styles.settingsValue, { color: c.textMuted }]}>Review user reports</Text>
+                  </View>
+                </View>
+                <Ionicons name="chevron-forward" size={18} color={c.textMuted} />
+              </Pressable>
+              <View style={[styles.divider, { backgroundColor: c.border }]} />
               <Pressable onPress={handleLogout} style={styles.settingsRow}>
                 <View style={styles.settingsRowLeft}>
                   <Ionicons name="log-out-outline" size={20} color={c.error} />
@@ -995,6 +1017,67 @@ export default function ProfileScreen() {
                       hitSlop={12}
                     >
                       <Ionicons name="checkmark-circle-outline" size={20} color="#4CAF50" />
+                    </Pressable>
+                  </View>
+                ))
+              )}
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
+
+      <Modal visible={showReports} animationType="slide" transparent>
+        <View style={styles.modalOverlay}>
+          <View style={[styles.composeModal, { backgroundColor: c.surface }]}>
+            <View style={styles.composeHeader}>
+              <Pressable onPress={() => setShowReports(false)} hitSlop={12}>
+                <Ionicons name="close" size={24} color={c.textSecondary} />
+              </Pressable>
+              <Text style={[styles.composeTitle, { color: c.text }]}>Reported Messages</Text>
+              <View style={{ width: 44 }} />
+            </View>
+
+            <ScrollView style={styles.modList} showsVerticalScrollIndicator={false}>
+              {reports.length === 0 ? (
+                <Text style={[styles.modEmptyText, { color: c.textMuted }]}>No reported messages</Text>
+              ) : (
+                reports.map((report: any) => (
+                  <View key={report.id} style={[styles.modRow, { borderBottomColor: c.border }]}>
+                    <View style={styles.modRowLeft}>
+                      <View style={[styles.modAvatar, { backgroundColor: 'rgba(255, 152, 0, 0.15)' }]}>
+                        <Ionicons name="flag" size={14} color="#FF9800" />
+                      </View>
+                      <View style={{ flex: 1 }}>
+                        <Text style={[styles.settingsLabel, { color: c.text }]}>
+                          Message in {report.channel === 'gold_vip' ? 'Gold' : '4 Markets'}
+                        </Text>
+                        <Text style={[styles.settingsValue, { color: c.textMuted }]}>
+                          Reported by {report.reportedBy} {'\u00B7'} {new Date(report.reportedAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}
+                        </Text>
+                        {report.reason && (
+                          <Text style={[styles.settingsValue, { color: '#FF9800' }]}>
+                            Reason: {report.reason}
+                          </Text>
+                        )}
+                      </View>
+                    </View>
+                    <Pressable
+                      onPress={() => {
+                        Alert.alert('Dismiss Report', 'Remove this report?', [
+                          { text: 'Cancel', style: 'cancel' },
+                          { text: 'Dismiss', onPress: async () => {
+                            try {
+                              const baseUrl = getApiUrl();
+                              await fetch(new URL(`/api/reports/${report.id}`, baseUrl).toString(), { method: 'DELETE' });
+                              setReports(prev => prev.filter((r: any) => r.id !== report.id));
+                              Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+                            } catch { Alert.alert('Error', 'Failed to dismiss report.'); }
+                          }},
+                        ]);
+                      }}
+                      hitSlop={12}
+                    >
+                      <Ionicons name="close-circle-outline" size={20} color={c.textMuted} />
                     </Pressable>
                   </View>
                 ))

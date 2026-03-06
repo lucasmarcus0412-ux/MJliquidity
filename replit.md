@@ -33,7 +33,7 @@ Preferred communication style: Simple, everyday language.
 - **Build**: Server is bundled with esbuild for production (`server:build` script)
 
 ### Database — PostgreSQL with Drizzle ORM
-- **Schema**: Defined in `shared/schema.ts` — tables: `users`, `analysis_posts`, `chat_messages`, `education_posts`, `moderators`, `banned_users`
+- **Schema**: Defined in `shared/schema.ts` — tables: `users`, `analysis_posts`, `chat_messages`, `education_posts`, `moderators`, `banned_users`, `reported_messages`
 - **ORM**: Drizzle ORM with `drizzle-zod` for validation schema generation
 - **Config**: `drizzle.config.ts` points to `DATABASE_URL` env variable, outputs migrations to `./migrations`
 - **Push**: Use `npm run db:push` to sync schema to the database
@@ -41,15 +41,20 @@ Preferred communication style: Simple, everyday language.
 
 ### Admin System
 - **Authentication**: Simple password-based admin login (hardcoded password `mjliquid2024` in `lib/AppContext.tsx`). This is client-side only — not a secure auth system
-- **Capabilities**: Admins can create/delete analysis posts, send admin-tagged chat messages, configure the subscription URL, manage moderators, and manage banned users
+- **Capabilities**: Admins can create/delete analysis posts, send admin-tagged chat messages, configure the subscription URL, manage moderators, manage banned users, and review reported messages
 - **Education Posts**: Support 3 content types — Article (text-based), Video (YouTube/link with thumbnail), PDF (link with cover image). Each post can have a title, content/description, thumbnail image, and external link
 
 ### Moderator System
 - **Assignment**: Admins assign moderators by display name via Profile > Admin > Manage Moderators modal
-- **Storage**: Moderator list stored in AsyncStorage (`mjl_moderators` key) with id, username, and addedAt timestamp
+- **Storage**: Moderator list stored in PostgreSQL `moderators` table with id, username, and addedAt timestamp
 - **Permissions**: Moderators can delete chat messages in Gold Intraday and Pro Markets chats. They cannot post analysis
 - **Visual Badges**: Moderator messages show a green shield icon, "MOD" label, and green-tinted message bubble. Profile shows a green "Moderator" badge
 - **Detection**: A user is recognized as a moderator when their display name matches a name in the moderator list (case-insensitive)
+
+### Chat Moderation
+- **Report Messages**: Normal users can long-press on non-admin messages to report them. Reports are stored server-side in the `reported_messages` table and can be reviewed by admins via Profile > Admin > Reported Messages
+- **Hide Messages**: Normal users can long-press to hide messages locally. Hidden message IDs are stored per-channel in AsyncStorage (`mjl_hidden_messages_gold_vip` / `mjl_hidden_messages_four_markets`)
+- **Admin View**: Admins can view all reported messages in Profile > Reported Messages modal, and dismiss reports after reviewing them
 
 ### Key Scripts
 - `npm run expo:dev` — Start Expo dev server (configured for Replit domain proxying)

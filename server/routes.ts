@@ -235,6 +235,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.get("/api/reports", async (_req, res) => {
+    try {
+      const reports = await storage.getReportedMessages();
+      res.json(reports);
+    } catch (err) {
+      console.error("Error getting reports:", err);
+      res.status(500).json({ error: "Failed to fetch reports" });
+    }
+  });
+
+  app.post("/api/reports", async (req, res) => {
+    try {
+      const { messageId, reportedBy, reason, channel } = req.body;
+      const report = await storage.reportMessage({
+        id: generateId(),
+        messageId,
+        reportedBy: reportedBy || "Anonymous",
+        reason: reason || null,
+        channel: channel || "unknown",
+        reportedAt: Date.now(),
+      });
+      res.json(report);
+    } catch (err) {
+      console.error("Error reporting message:", err);
+      res.status(500).json({ error: "Failed to report message" });
+    }
+  });
+
+  app.delete("/api/reports/:id", async (req, res) => {
+    try {
+      await storage.deleteReport(req.params.id);
+      res.json({ success: true });
+    } catch (err) {
+      console.error("Error deleting report:", err);
+      res.status(500).json({ error: "Failed to delete report" });
+    }
+  });
+
   app.post("/api/upload", async (req, res) => {
     try {
       const { imageData, mimeType } = req.body;
