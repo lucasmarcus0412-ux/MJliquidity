@@ -27,6 +27,14 @@ export const ANDROID_PRODUCT_IDS = {
   FULL_ACCESS: 'mjliquidity.bundle.monthly:bundle-monthly',
 } as const;
 
+export function getPackagePriceString(packages: PurchasesPackage[], productId: string): string | null {
+  const pkg = findPackageByProductId(packages, productId);
+  if (pkg) {
+    return pkg.product.priceString;
+  }
+  return null;
+}
+
 export function findPackageByProductId(packages: PurchasesPackage[], productId: string): PurchasesPackage | undefined {
   let pkg = packages.find((p) => p.product.identifier === productId);
   if (pkg) return pkg;

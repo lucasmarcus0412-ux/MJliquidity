@@ -35,7 +35,7 @@ import {
 } from '@/lib/storage';
 import { useFocusEffect } from 'expo-router';
 import { getApiUrl } from '@/lib/query-client';
-import { getOfferings, purchasePackage, findPackageByProductId, PRODUCT_IDS } from '@/lib/revenuecat';
+import { getOfferings, purchasePackage, findPackageByProductId, PRODUCT_IDS, getPackagePriceString } from '@/lib/revenuecat';
 import type { PurchasesPackage } from 'react-native-purchases';
 
 type ActiveSection = 'main' | 'education';
@@ -58,21 +58,18 @@ function getYouTubeId(url: string): string | null {
 const MEMBERSHIP_TIERS = [
   {
     name: 'Gold Intraday VIP',
-    price: '74.99',
     productId: 'mjliquidity.vip.monthly',
     description: 'Full Gold market analysis',
     features: ['XAUUSD liquidity zones & reaction areas', 'Daily scenario mapping', 'Members-only Gold chat'],
   },
   {
     name: '4 Markets Session Analysis',
-    price: '74.99',
     productId: 'mjliquidity.analysis.monthly',
     description: 'Multi-asset coverage',
     features: ['NQ, ES, BTC, XAU analysis', 'Consolidated market analysis', 'Members-only Pro chat'],
   },
   {
     name: 'Full Access – Gold + 4 Markets',
-    price: '99.99',
     productId: 'mjliquidity.bundle.monthly',
     description: 'Everything unlocked',
     features: ['Gold VIP + 4 Markets', 'All premium content', 'All members-only chats'],
@@ -541,7 +538,7 @@ export default function ProfileScreen() {
                   <Ionicons name={tier.isBestValue ? 'star' : 'diamond-outline'} size={20} color={tier.isBestValue ? c.gold : c.textSecondary} />
                   <View>
                     <Text style={[styles.settingsLabel, { color: c.text }]}>{tier.name}</Text>
-                    <Text style={[styles.settingsValue, { color: c.textMuted }]}>{tier.price}/month</Text>
+                    <Text style={[styles.settingsValue, { color: c.textMuted }]}>{getPackagePriceString(availablePackages, tier.productId) ? `${getPackagePriceString(availablePackages, tier.productId)}/month` : 'Subscribe'}</Text>
                   </View>
                 </View>
                 <Ionicons name="chevron-forward" size={18} color={c.textMuted} />
@@ -1089,9 +1086,9 @@ export default function ProfileScreen() {
                 MJliquidity offers the following auto-renewable subscription plans:
               </Text>
               {[
-                'Gold Intraday VIP — £74.99/month',
-                '4 Markets Session Analysis — £74.99/month',
-                'Full Access (Gold + 4 Markets) — £99.99/month',
+                `Gold Intraday VIP — ${getPackagePriceString(availablePackages, 'mjliquidity.vip.monthly') || 'monthly subscription'}`,
+                `4 Markets Session Analysis — ${getPackagePriceString(availablePackages, 'mjliquidity.analysis.monthly') || 'monthly subscription'}`,
+                `Full Access (Gold + 4 Markets) — ${getPackagePriceString(availablePackages, 'mjliquidity.bundle.monthly') || 'monthly subscription'}`,
               ].map((item, i) => (
                 <View key={i} style={styles.guidelineRow}>
                   <View style={[styles.guidelineDot, { backgroundColor: c.gold }]} />

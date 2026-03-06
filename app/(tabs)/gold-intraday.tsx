@@ -36,6 +36,8 @@ import {
 } from '@/lib/storage';
 import { getApiUrl } from '@/lib/query-client';
 import { useFocusEffect, useRouter } from 'expo-router';
+import { getOfferings, getPackagePriceString, findPackageByProductId } from '@/lib/revenuecat';
+import type { PurchasesPackage } from 'react-native-purchases';
 
 type ActiveTab = 'analysis' | 'chat';
 
@@ -70,7 +72,7 @@ export default function GoldIntradayScreen() {
   const c = Colors.dark;
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const { isAdmin, isModerator, userName, setUserNameValue, canAccessGold, subscriptionUrl } = useApp();
+  const { isAdmin, isModerator, userName, setUserNameValue, canAccessGold, subscriptionUrl, refreshSubscriptionStatus } = useApp();
   const [activeTab, setActiveTab] = useState<ActiveTab>('analysis');
   const [posts, setPosts] = useState<AnalysisPost[]>([]);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -85,6 +87,7 @@ export default function GoldIntradayScreen() {
   const [imageBase64, setImageBase64] = useState<string | null>(null);
   const [isPosting, setIsPosting] = useState(false);
   const [isBanned, setIsBanned] = useState(false);
+  const [paywallPackages, setPaywallPackages] = useState<PurchasesPackage[]>([]);
   const flatListRef = useRef<FlatList>(null);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -120,9 +123,12 @@ export default function GoldIntradayScreen() {
     useCallback(() => {
       loadPosts();
       loadMessages();
+      if (!canAccessGold && (Platform.OS === 'ios' || Platform.OS === 'android')) {
+        getOfferings().then(setPaywallPackages).catch(() => {});
+      }
       pollRef.current = setInterval(() => { loadMessages(); loadPosts(); }, 3000);
       return () => { if (pollRef.current) clearInterval(pollRef.current); };
-    }, [loadPosts, loadMessages])
+    }, [loadPosts, loadMessages, canAccessGold])
   );
 
   const onRefresh = async () => {
@@ -244,20 +250,39 @@ export default function GoldIntradayScreen() {
 
   const webTopInset = Platform.OS === 'web' ? 67 : 0;
 
-  const handleSubscribe = () => {
+  const handleSubscribe = async () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     if (Platform.OS === 'web') {
       if (subscriptionUrl) {
         Linking.openURL(subscriptionUrl).catch(() => Alert.alert('Error', 'Could not open link.'));
       } else {
-        Alert.alert('Download the App', 'In-app subscriptions are available through the iOS app. Download MJliquidity from the App Store to subscribe.');
+        Alert.alert('Download the App', 'In-app subscriptions are available through the iOS or Android app. Download MJliquidity to subscribe.');
       }
       return;
     }
-    const { purchaseFromPaywall } = require('@/lib/revenuecat');
-    purchaseFromPaywall('mjliquidity.vip.monthly').catch(() => {
-      Alert.alert('Subscribe', 'Visit the Profile tab to view subscription plans and get access.');
-    });
+    try {
+      let pkg = findPackageByProductId(paywallPackages, 'mjliquidity.vip.monthly');
+      if (!pkg) {
+        const freshPackages = await getOfferings();
+        setPaywallPackages(freshPackages);
+        pkg = findPackageByProductId(freshPackages, 'mjliquidity.vip.monthly');
+      }
+      if (!pkg) {
+        Alert.alert('Subscribe', 'Visit the Profile tab to view subscription plans and get access.');
+        return;
+      }
+      const { purchasePackage } = require('@/lib/revenuecat');
+      const customerInfo = await purchasePackage(pkg);
+      if (customerInfo) {
+        await refreshSubscriptionStatus();
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        Alert.alert('Success', 'Your Gold VIP subscription is now active!');
+      }
+    } catch (error: any) {
+      if (!error?.userCancelled) {
+        Alert.alert('Subscribe', 'Visit the Profile tab to view subscription plans and get access.');
+      }
+    }
   };
 
   const renderPaywall = () => (
@@ -281,7 +306,7 @@ export default function GoldIntradayScreen() {
       <Pressable onPress={handleSubscribe} style={[styles.paywallBtn, { backgroundColor: c.gold }]}>
         <Text style={styles.paywallBtnText}>Subscribe Now</Text>
       </Pressable>
-      <Text style={[styles.paywallPrice, { color: c.textMuted }]}>From £75/month</Text>
+      <Text style={[styles.paywallPrice, { color: c.textMuted }]}>{getPackagePriceString(paywallPackages, 'mjliquidity.vip.monthly') ? `${getPackagePriceString(paywallPackages, 'mjliquidity.vip.monthly')}/month` : 'Tap to view pricing'}</Text>
       <Text style={[styles.paywallTerms, { color: c.textMuted }]}>
         Subscriptions auto-renew unless cancelled at least 24 hours before the end of the current period. Payment is charged at confirmation of purchase. Manage or cancel anytime in your account settings.
       </Text>
