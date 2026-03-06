@@ -464,7 +464,7 @@ export default function ProMarketsScreen() {
           }
         />
       ) : (
-        <>
+        <View style={{ flex: 1 }}>
           <FlatList
             ref={flatListRef}
             data={messages}
@@ -507,7 +507,7 @@ export default function ProMarketsScreen() {
                 <Text style={[styles.messageText, { color: c.text }]}>{item.text}</Text>
               </View>
             )}
-            contentContainerStyle={[styles.messagesList, { paddingBottom: 8 }]}
+            contentContainerStyle={[styles.messagesList, { paddingBottom: 8, flexGrow: 1 }]}
             showsVerticalScrollIndicator={false}
             onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: false })}
             keyboardShouldPersistTaps="handled"
@@ -582,7 +582,7 @@ export default function ProMarketsScreen() {
               </View>
             </View>
           )}
-        </>
+        </View>
       )}
 
       <Modal visible={showCompose} animationType="slide" transparent>

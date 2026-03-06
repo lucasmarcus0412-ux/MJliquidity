@@ -451,7 +451,7 @@ export default function GoldIntradayScreen() {
           }
         />
       ) : (
-        <>
+        <View style={{ flex: 1 }}>
           <FlatList
             ref={flatListRef}
             data={messages}
@@ -494,7 +494,7 @@ export default function GoldIntradayScreen() {
                 <Text style={[styles.messageText, { color: c.text }]}>{item.text}</Text>
               </View>
             )}
-            contentContainerStyle={[styles.messagesList, { paddingBottom: 8 }]}
+            contentContainerStyle={[styles.messagesList, { paddingBottom: 8, flexGrow: 1 }]}
             showsVerticalScrollIndicator={false}
             onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: false })}
             keyboardShouldPersistTaps="handled"
@@ -569,7 +569,7 @@ export default function GoldIntradayScreen() {
               </View>
             </View>
           )}
-        </>
+        </View>
       )}
 
       <Modal visible={showCompose} animationType="slide" transparent>
