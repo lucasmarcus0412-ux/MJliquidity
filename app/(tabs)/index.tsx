@@ -91,7 +91,7 @@ function AnalysisCard({ post, isAdmin, onDelete }: {
       <Text style={[styles.cardTitle, { color: c.text }]}>{post.title}</Text>
       <Text style={[styles.cardContent, { color: c.textSecondary }]}>{post.content}</Text>
       {resolvedImage && (
-        <Image source={{ uri: resolvedImage }} style={{ width: '100%', height: 200, borderRadius: 12, marginBottom: 12 }} resizeMode="cover" />
+        <Image source={{ uri: resolvedImage }} style={{ width: '100%', aspectRatio: 4 / 3, borderRadius: 12, marginBottom: 12 }} resizeMode="contain" />
       )}
       <View style={styles.cardFooter}>
         <View style={styles.adminBadge}>

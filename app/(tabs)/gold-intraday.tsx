@@ -427,7 +427,7 @@ export default function GoldIntradayScreen() {
               <Text style={[styles.cardTitle, { color: c.text }]}>{item.title}</Text>
               <Text style={[styles.cardContent, { color: c.textSecondary }]}>{item.content}</Text>
               {item.imageUri && (
-                <Image source={{ uri: resolveImageUrl(item.imageUri) }} style={{ width: '100%', height: 200, borderRadius: 12, marginBottom: 12 }} resizeMode="cover" />
+                <Image source={{ uri: resolveImageUrl(item.imageUri) }} style={{ width: '100%', aspectRatio: 4 / 3, borderRadius: 12, marginBottom: 12 }} resizeMode="contain" />
               )}
               <View style={styles.cardFooter}>
                 <View style={styles.adminBadge}>
